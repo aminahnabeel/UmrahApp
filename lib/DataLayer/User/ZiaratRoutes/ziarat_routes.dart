@@ -1,0 +1,68 @@
+import 'package:flutter/material.dart';
+
+final routes = [
+  {
+    "from": "Masjid al-Haram",
+    "to": "Mina",
+    "distance": "8 km",
+    "time": "15-20 mins",
+    "transport": "Bus / Metro",
+    "icon": Icons.directions_bus,
+  },
+  {
+    "from": "Mina",
+    "to": "Arafat",
+    "distance": "12 km",
+    "time": "20-30 mins",
+    "transport": "Bus / Metro",
+    "icon": Icons.train,
+  },
+  {
+    "from": "Arafat",
+    "to": "Muzdalifah",
+    "distance": "7 km",
+    "time": "15 mins",
+    "transport": "Bus / Walking",
+    "icon": Icons.directions_walk,
+  },
+  {
+    "from": "Muzdalifah",
+    "to": "Mina (Jamarat)",
+    "distance": "9 km",
+    "time": "20 mins",
+    "transport": "Bus / Walking",
+    "icon": Icons.directions_car,
+  },
+  {
+    "from": "Mina",
+    "to": "Masjid al-Haram",
+    "distance": "8 km",
+    "time": "15-20 mins",
+    "transport": "Bus / Metro",
+    "icon": Icons.local_taxi,
+  },
+  {
+    "from": "Makkah",
+    "to": "Madinah (Masjid an-Nabawi)",
+    "distance": "450 km",
+    "time": "4-5 hours",
+    "transport": "Highway Bus / Train",
+    "icon": Icons.directions_bus_filled,
+  },
+  {
+    "from": "Madinah",
+    "to": "Quba Mosque",
+    "distance": "5 km",
+    "time": "10 mins",
+    "transport": "Taxi / Shuttle",
+    "icon": Icons.mosque,
+  },
+  {
+    "from": "Madinah",
+    "to": "Uhud Mountain",
+    "distance": "7 km",
+    "time": "15 mins",
+    "transport": "Taxi / Bus",
+    "icon": Icons.terrain,
+  },
+];

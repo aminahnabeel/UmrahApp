@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "696920631745",
+    "project_id": "smartumrah-a58c2",
+    "storage_bucket": "smartumrah-a58c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:696920631745:android:470b815dbcc7361c10e740",
+        "android_client_info": {
+          "package_name": "com.example.smart_umrah_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCyfyy9ptTscH1Rzj3Eskc_7EJ4QMlWhPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
