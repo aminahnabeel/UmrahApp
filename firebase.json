@@ -1,1 +1,28 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"smartumrah-a58c2","appId":"1:696920631745:android:470b815dbcc7361c10e740","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"smartumrah-a58c2","configurations":{"android":"1:696920631745:android:470b815dbcc7361c10e740","ios":"1:696920631745:ios:f4891f1d724e7c2610e740","macos":"1:696920631745:ios:f4891f1d724e7c2610e740","web":"1:696920631745:web:1d70db788085c8fe10e740","windows":"1:696920631745:web:cd0c7daaf2b12f7410e740"}}}}}}
+{
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "umrahapp-7d068",
+					"appId": "1:13880865396:android:157c43efca3b8578115721",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "umrahapp-7d068",
+					"configurations": {
+						"android": "1:13880865396:android:157c43efca3b8578115721",
+						"ios": "1:13880865396:ios:e6c4e4f44b8b081f115721",
+						"macos": "1:13880865396:ios:e6c4e4f44b8b081f115721",
+						"web": "1:13880865396:web:d01c9343c0fac7ab115721",
+						"windows": "1:13880865396:web:8d04e58ae8099023115721"
+					}
+				}
+			}
+		}
+	},
+	"firestore": {
+		"rules": "firestore.rules"
+	}
+}

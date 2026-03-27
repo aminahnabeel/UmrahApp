@@ -41,49 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA9qCP8p-EiRXc2CEbxbrQoLLYyHiMfeK4',
-    appId: '1:696920631745:web:1d70db788085c8fe10e740',
-    messagingSenderId: '696920631745',
-    projectId: 'smartumrah-a58c2',
-    authDomain: 'smartumrah-a58c2.firebaseapp.com',
-    storageBucket: 'smartumrah-a58c2.firebasestorage.app',
-    measurementId: 'G-DKM5HC56CD',
+    apiKey: 'AIzaSyAxIY9lXJIwivA3BKdOI-iGztM5ng15sDw',
+    appId: '1:13880865396:web:d01c9343c0fac7ab115721',
+    messagingSenderId: '13880865396',
+    projectId: 'umrahapp-7d068',
+    authDomain: 'umrahapp-7d068.firebaseapp.com',
+    storageBucket: 'umrahapp-7d068.firebasestorage.app',
+    measurementId: 'G-B28JTGL9KV',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCyfyy9ptTscH1Rzj3Eskc_7EJ4QMlWhPs',
-    appId: '1:696920631745:android:470b815dbcc7361c10e740',
-    messagingSenderId: '696920631745',
-    projectId: 'smartumrah-a58c2',
-    storageBucket: 'smartumrah-a58c2.firebasestorage.app',
+    apiKey: 'AIzaSyDphN6l_G8runYeJ9gyPrKw--8Cyb2f-z8',
+    appId: '1:13880865396:android:157c43efca3b8578115721',
+    messagingSenderId: '13880865396',
+    projectId: 'umrahapp-7d068',
+    storageBucket: 'umrahapp-7d068.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAolb7-1YV7LWpK5USKJ8dh5frASLjB96I',
-    appId: '1:696920631745:ios:f4891f1d724e7c2610e740',
-    messagingSenderId: '696920631745',
-    projectId: 'smartumrah-a58c2',
-    storageBucket: 'smartumrah-a58c2.firebasestorage.app',
+    apiKey: 'AIzaSyA3cxX9da7Qw1nSVW7-gbkxzCtUCc_Rl_A',
+    appId: '1:13880865396:ios:e6c4e4f44b8b081f115721',
+    messagingSenderId: '13880865396',
+    projectId: 'umrahapp-7d068',
+    storageBucket: 'umrahapp-7d068.firebasestorage.app',
     iosBundleId: 'com.example.smartUmrahApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAolb7-1YV7LWpK5USKJ8dh5frASLjB96I',
-    appId: '1:696920631745:ios:f4891f1d724e7c2610e740',
-    messagingSenderId: '696920631745',
-    projectId: 'smartumrah-a58c2',
-    storageBucket: 'smartumrah-a58c2.firebasestorage.app',
+    apiKey: 'AIzaSyA3cxX9da7Qw1nSVW7-gbkxzCtUCc_Rl_A',
+    appId: '1:13880865396:ios:e6c4e4f44b8b081f115721',
+    messagingSenderId: '13880865396',
+    projectId: 'umrahapp-7d068',
+    storageBucket: 'umrahapp-7d068.firebasestorage.app',
     iosBundleId: 'com.example.smartUmrahApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyA9qCP8p-EiRXc2CEbxbrQoLLYyHiMfeK4',
-    appId: '1:696920631745:web:cd0c7daaf2b12f7410e740',
-    messagingSenderId: '696920631745',
-    projectId: 'smartumrah-a58c2',
-    authDomain: 'smartumrah-a58c2.firebaseapp.com',
-    storageBucket: 'smartumrah-a58c2.firebasestorage.app',
-    measurementId: 'G-F6PVB4KGME',
+    apiKey: 'AIzaSyAxIY9lXJIwivA3BKdOI-iGztM5ng15sDw',
+    appId: '1:13880865396:web:8d04e58ae8099023115721',
+    messagingSenderId: '13880865396',
+    projectId: 'umrahapp-7d068',
+    authDomain: 'umrahapp-7d068.firebaseapp.com',
+    storageBucket: 'umrahapp-7d068.firebasestorage.app',
+    measurementId: 'G-3K873Y8D81',
   );
 
 }

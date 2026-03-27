@@ -4,6 +4,8 @@ import 'package:smart_umrah_app/DataLayer/User/UserData/user_features.dart';
 import 'package:smart_umrah_app/Models/UserProfileDataModel/user_profile_datamodel.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/AuthServices/logout.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/UserProfileData/FetchingProfile/fetch_profile.dart';
+import 'package:smart_umrah_app/screens/User/UserDashboard/chatbot.dart';
+import 'package:url_launcher/url_launcher.dart'; // ✅ NEW
 import '../UserFeatures/umrah_journal_screen.dart';
 
 class UserDashboardController extends GetxController {
@@ -43,6 +45,39 @@ class UserDashboard extends StatelessWidget {
   static const Color navBarSelectedItemColor = accentColor;
   static const Color navBarUnselectedItemColor = Colors.white54;
 
+  // ✅ NEW FUNCTION (Nusuk Integration)
+  void openNusuk(BuildContext context) async {
+    final Uri appUri = Uri.parse("nusuk://");
+   final Uri playStoreUri = Uri.parse(
+     "https://play.google.com/store/apps/details?id=com.moh.nusukapp");
+
+    if (await canLaunchUrl(appUri)) {
+      await launchUrl(appUri);
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Nusuk App Required"),
+          content: const Text(
+            "To apply for Umrah or Hajj, please install the official Nusuk app.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                await launchUrl(playStoreUri);
+              },
+              child: const Text("Install"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,6 +94,11 @@ class UserDashboard extends StatelessWidget {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline, color: textColorPrimary),
+            onPressed: () => Get.to(() => ChatbotScreen()),
+            tooltip: 'Chatbot',
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: textColorPrimary),
             onPressed: () async => await logoutUser(),
@@ -132,9 +172,23 @@ class UserDashboard extends StatelessWidget {
               mainAxisSpacing: 16.0,
               childAspectRatio: screenWidth < 600 ? 0.9 : 1.1,
             ),
-            itemCount: userFeatures.length,
+            itemCount: userFeatures.length + 1, // ✅ UPDATED
             itemBuilder: (context, index) {
-              final feature = userFeatures[index];
+              // ✅ FIRST CARD = NUSUK
+              if (index == 0) {
+                return _buildDashboardCard(
+                  context,
+                  icon: Icons.travel_explore,
+                  title: "Apply for Umrah / Hajj",
+                  description: "Open Nusuk (Official App)",
+                  onTap: () {
+                    openNusuk(context);
+                  },
+                  screenWidth: screenWidth,
+                );
+              }
+             final feature = userFeatures[index - 1];
+            
               return _buildDashboardCard(
                 context,
                 icon: feature['icon'],
