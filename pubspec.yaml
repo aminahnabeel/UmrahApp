@@ -104,6 +104,8 @@ flutter:
     - assets/umrah_app_logo.png
     - assets/emailverify.json
     - assets/loadinginfinity.json
+    - assets/en.json
+    - assets/ur.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

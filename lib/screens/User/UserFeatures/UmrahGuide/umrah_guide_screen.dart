@@ -46,9 +46,7 @@ class UmrahGuideScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [TextGuideTab(), VideosTab(), DuasTab()],
-        ),
+        body: TabBarView(children: [TextGuideTab(), VideosTab(), DuasTab()]),
       ),
     );
   }
