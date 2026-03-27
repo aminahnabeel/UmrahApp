@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:smart_umrah_app/widgets/custom_app_bar.dart'; // Import CustomAppBar
 
 class SaiCounter extends StatefulWidget {
   const SaiCounter({super.key});
@@ -11,12 +12,11 @@ class SaiCounter extends StatefulWidget {
 
 class _SaiCounterState extends State<SaiCounter> {
   int saiCount = 0;
-  double totalDistance = 0.0; // Distance for current leg (meters)
+  double totalDistance = 0.0;
   Position? lastPosition;
   StreamSubscription<Position>? _positionStreamSub;
 
   static const double saiDistance = 394; // Safa <-> Marwa distance
-
   String statusMessage = "Initializing location...";
   bool isTracking = false;
 
@@ -33,138 +33,167 @@ class _SaiCounterState extends State<SaiCounter> {
   }
 
   Future<void> _startLocationTracking() async {
-    setState(() {
-      statusMessage = "Checking location services...";
-    });
+    setState(() => statusMessage = "Checking location...");
 
-    // 1. Check if location service is enabled
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() {
-        statusMessage = "Location service is disabled. Please enable GPS.";
-      });
+      setState(() => statusMessage = "GPS is disabled.");
       return;
     }
 
-    // 2. Check & request permission
     LocationPermission permission = await Geolocator.checkPermission();
-
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.denied) {
-      setState(() {
-        statusMessage = "Location permission denied. Cannot track distance.";
-      });
+    if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+      setState(() => statusMessage = "Permission denied.");
       return;
     }
 
-    if (permission == LocationPermission.deniedForever) {
-      setState(() {
-        statusMessage =
-            "Location permission permanently denied. Enable from settings.";
-      });
-      return;
-    }
-
-    // 3. Start listening to location updates
     setState(() {
-      statusMessage = "Tracking started. Start walking...";
+      statusMessage = "Tracking... Start walking";
       isTracking = true;
     });
 
-    _positionStreamSub =
-        Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.best,
-            distanceFilter: 0, // report *all* changes
-          ),
-        ).listen(
-          (Position position) {
-            // For debugging:
-            // print("New position: ${position.latitude}, ${position.longitude}");
-
-            if (lastPosition != null) {
-              final double distance = Geolocator.distanceBetween(
-                lastPosition!.latitude,
-                lastPosition!.longitude,
-                position.latitude,
-                position.longitude,
-              );
-
-              // Ignore tiny/noisy movements less than 0.5m
-              if (distance > 0.5) {
-                setState(() {
-                  totalDistance += distance;
-                });
-
-                // Check if one Sai leg (394m) completed
-                if (totalDistance >= saiDistance) {
-                  setState(() {
-                    saiCount++;
-                    totalDistance = 0.0; // reset for next leg
-                    statusMessage = "One round completed! Continue walking...";
-                  });
-                }
-              }
-            }
-
-            lastPosition = position;
-          },
-          onError: (error) {
-            setState(() {
-              statusMessage = "Location error: $error";
-            });
-          },
+    _positionStreamSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 0,
+      ),
+    ).listen((Position position) {
+      if (lastPosition != null) {
+        final double distance = Geolocator.distanceBetween(
+          lastPosition!.latitude, lastPosition!.longitude,
+          position.latitude, position.longitude,
         );
+
+        if (distance > 0.5) {
+          setState(() {
+            totalDistance += distance;
+            if (totalDistance >= saiDistance) {
+              saiCount++;
+              totalDistance = 0.0;
+              statusMessage = "Round $saiCount completed!";
+            }
+          });
+        }
+      }
+      lastPosition = position;
+    });
   }
 
   void _resetCounter() {
     setState(() {
       saiCount = 0;
       totalDistance = 0.0;
-      statusMessage = "Counter reset. Start walking again.";
+      statusMessage = "Counter reset.";
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Sa’i Auto Counter")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "$saiCount / 7 Rounds Completed",
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+      // 1. Same CustomAppBar
+      appBar: const CustomAppBar(
+        title: "Sa’i Auto Counter",
+        showBackButton: true,
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+                
+                // Icon for Sa'i
+                const Icon(Icons.directions_run, size: 80, color: Colors.white),
+                
+                const SizedBox(height: 20),
+
+                Text(
+                  "$saiCount / 7 Rounds",
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                
+                const SizedBox(height: 30),
+
+                // Distance Card (Matching Tawaf Style)
+                Card(
+                  color: Colors.white.withOpacity(0.15),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          "${totalDistance.toStringAsFixed(1)} m",
+                          style: const TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const Text(
+                          "Current Leg Progress",
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Status Message
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Text(
+                    statusMessage,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 15),
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Reset Button (Same as Tawaf)
+                ElevatedButton.icon(
+                  onPressed: _resetCounter,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Reset Tracking"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF1E3A8A),
+                    padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 15),
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 6,
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text("Current Leg Distance:", style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 8),
-            Text(
-              "${totalDistance.toStringAsFixed(2)} m",
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "One leg completes at 394 meters",
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              statusMessage,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Colors.blueGrey),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _resetCounter,
-              child: const Text("Reset Counter"),
-            ),
-          ],
+          ),
         ),
       ),
     );

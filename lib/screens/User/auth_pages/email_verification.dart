@@ -9,8 +9,8 @@ import 'package:smart_umrah_app/routes/routes.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   final String? emailAddress;
-  EmailVerificationScreen({Key? key, required this.emailAddress})
-    : super(key: key);
+  const EmailVerificationScreen({Key? key, required this.emailAddress})
+      : super(key: key);
 
   @override
   _EmailVerificationScreenState createState() =>
@@ -67,23 +67,29 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       await user?.sendEmailVerification();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Verification email sent to ${widget.emailAddress}'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Verification email sent to ${widget.emailAddress}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to send verification email: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send verification email: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() {
-        _isVerifying = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isVerifying = false;
+        });
+      }
     }
   }
 
@@ -93,18 +99,16 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       await user?.reload();
 
       if (user?.emailVerified ?? false) {
-        // Cancel timers
         _verificationCheckTimer.cancel();
         _resendCooldownTimer.cancel();
 
-        // Save verification state
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isEmailVerified', true);
         await prefs.setString('userEmail', user?.email ?? '');
 
-        // Navigate to home screen
-        Navigator.pop(context);
-        Get.toNamed(AppRoutes.usersignin);
+        if (mounted) {
+          Get.offAllNamed(AppRoutes.usersignin); // Use offAll to clear stack
+        }
       }
     } catch (e) {
       print('Error checking email verification: $e');
@@ -126,122 +130,136 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         automaticallyImplyLeading: false,
         title: const Text('Email Verification'),
         backgroundColor: Colors.deepPurple,
+        elevation: 0,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated Email Verification Lottie Animation
-              Lottie.asset(
-                'assets/emailverify.json',
-                height: 200,
-                width: 200,
-                repeat: true,
-              ),
-
-              const SizedBox(height: 30),
-
-              Text(
-                'Verify Your Email',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple[800],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Text(
-                'A verification email has been sent to\n${widget.emailAddress}',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              // Circular Countdown Timer
-              CircularPercentIndicator(
-                radius: 60.0,
-                lineWidth: 10.0,
-                percent: _remainingTime / 60,
-                center: Text(
-                  '$_remainingTime',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+        child: Center(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Lottie Animation with fixed size
+                  Lottie.asset(
+                    'assets/emailverify.json',
+                    height: 180,
+                    width: 180,
+                    fit: BoxFit.contain,
+                    repeat: true,
                   ),
-                ),
-                progressColor: _canResend ? Colors.green : Colors.deepPurple,
-                backgroundColor: Colors.deepPurple.shade100,
-              ),
 
-              const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
-              // Resend Email Button
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _canResend
-                    ? ElevatedButton(
-                        onPressed: _isVerifying
-                            ? null
-                            : () {
-                                sendVerificationEmail();
-                                startResendCooldown();
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 15,
-                          ),
-                        ),
-                        child: _isVerifying
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                'Resend Verification Email',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      )
-                    : Text(
-                        'Resend in $_remainingTime seconds',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 16,
+                  Text(
+                    'Verify Your Email',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple[800],
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  Text(
+                    'A verification email has been sent to\n${widget.emailAddress}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 15,
+                      height: 1.5,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Circular Countdown Timer
+                  CircularPercentIndicator(
+                    radius: 55.0,
+                    lineWidth: 10.0,
+                    animation: true,
+                    animateFromLastPercent: true,
+                    percent: _remainingTime / 60,
+                    center: Text(
+                      '$_remainingTime',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    circularStrokeCap: CircularStrokeCap.round,
+                    progressColor: _canResend ? Colors.green : Colors.deepPurple,
+                    backgroundColor: Colors.deepPurple.shade100,
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Resend Email Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: (_canResend && !_isVerifying)
+                          ? () {
+                              sendVerificationEmail();
+                              startResendCooldown();
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        disabledBackgroundColor: Colors.grey.shade300,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Wrong Email Option
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Get.toNamed(AppRoutes.usersignin);
-                },
-                child: Text(
-                  'Wrong email? Go back to Login',
-                  style: TextStyle(
-                    color: Colors.deepPurple[700],
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                      child: _isVerifying
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              _canResend
+                                  ? 'Resend Verification Email'
+                                  : 'Resend in $_remainingTime seconds',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: _canResend ? Colors.white : Colors.black45,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
                   ),
-                ),
+
+                  const SizedBox(height: 15),
+
+                  // Wrong Email Option
+                  TextButton(
+                    onPressed: () {
+                      _verificationCheckTimer.cancel();
+                      _resendCooldownTimer.cancel();
+                      Get.offAllNamed(AppRoutes.usersignin);
+                    },
+                    child: Text(
+                      'Wrong email? Go back to Login',
+                      style: TextStyle(
+                        color: Colors.deepPurple[700],
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
