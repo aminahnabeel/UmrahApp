@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -25,16 +24,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       centerTitle: true,
-      backgroundColor: const Color(0xFF1E3A8A), // Aapka primary blue color
+      backgroundColor: const Color(0xFF1E3A8A),
       elevation: 0,
+      // Fixed Back Arrow Logic
       leading: showBackButton
           ? IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-              onPressed: () => Get.back(),
+              onPressed: () {
+                // Native Navigator use karein GetX ke bajaye taake freeze na ho
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
             )
           : null,
       actions: actions,
-      // Agar aap chahti hain ke gradient app bar ho, to niche wala hissa use karein:
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

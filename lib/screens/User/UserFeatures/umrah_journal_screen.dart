@@ -1,126 +1,107 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart'; // Isse yellow line khatam ho jayegi aur kIsWeb chalega
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:smart_umrah_app/Controller/userControllers/JournalController/journal_controller.dart';
+import 'package:smart_umrah_app/widgets/custom_app_bar.dart';
 
 class UmrahJournalScreen extends StatelessWidget {
   UmrahJournalScreen({super.key});
 
   final UmrahJournalController controller = Get.put(UmrahJournalController());
-
   final TextEditingController titleController = TextEditingController();
   final TextEditingController contentController = TextEditingController();
 
-  void showJournalDialog({Map<String, dynamic>? docData, String? docId}) {
+  // Aapki Theme ke Colors
+  static const Color topGradientColor = Color(0xFF0D47A1); 
+  static const Color bottomGradientColor = Color(0xFF1976D2); 
+  static const Color customIconBlue = Color(0xFF003D91); 
+
+  void showJournalDialog(BuildContext context, {Map<String, dynamic>? docData, String? docId}) {
     if (docData != null) {
       titleController.text = docData['title'] ?? '';
       contentController.text = docData['content'] ?? '';
-      controller.imageFile.value = null;
     } else {
       titleController.clear();
       contentController.clear();
-      controller.imageFile.value = null;
     }
+    controller.imageFile.value = null;
 
     Get.defaultDialog(
-      title: docId == null ? 'New Journal Entry' : 'Edit Entry',
-      backgroundColor: UmrahJournalController.cardBackgroundColor,
-      titleStyle: const TextStyle(color: Colors.white),
+      title: docId == null ? 'Add Document' : 'Edit Document', //
+      backgroundColor: Colors.white,
+      titleStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
-              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Title',
-                labelStyle: const TextStyle(color: Colors.white70),
-                filled: true,
-                fillColor: UmrahJournalController.primaryBackgroundColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: contentController,
-              style: const TextStyle(color: Colors.white),
+              maxLines: 3,
               decoration: InputDecoration(
                 labelText: 'Content',
-                labelStyle: const TextStyle(color: Colors.white70),
-                filled: true,
-                fillColor: UmrahJournalController.primaryBackgroundColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              maxLines: 5,
             ),
             const SizedBox(height: 10),
+            
+            // Image Preview Logic: Mobile aur Web dono ke liye
             Obx(() {
               if (controller.imageFile.value != null) {
-                return Image.file(
-                  controller.imageFile.value!,
-                  height: 100,
-                  width: 100,
-                  fit: BoxFit.cover,
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: kIsWeb 
+                    ? Image.network(controller.imageFile.value!.path, height: 100, width: 100, fit: BoxFit.cover)
+                    : Image.file(File(controller.imageFile.value!.path), height: 100, width: 100, fit: BoxFit.cover),
                 );
               } else if (docData?['photoUrl'] != null) {
-                return Image.network(
-                  docData!['photoUrl'],
-                  height: 100,
-                  width: 100,
-                  fit: BoxFit.cover,
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(docData!['photoUrl'], height: 100, width: 100, fit: BoxFit.cover),
                 );
-              } else {
-                return const SizedBox();
               }
+              return const Text("No image selected", style: TextStyle(fontSize: 12, color: Colors.grey));
             }),
-            const SizedBox(height: 8),
+
+            const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: controller.pickImage,
-              icon: const Icon(Icons.photo_library),
-              label: const Text('Add Photo'),
+              onPressed: () => controller.pickImage(),
+              icon: const Icon(Icons.photo_library, color: Colors.white, size: 20),
+              label: const Text('Pick Image', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: UmrahJournalController.accentColor,
+                backgroundColor: customIconBlue,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
               ),
             ),
           ],
         ),
       ),
-      confirm: Obx(
-        () => ElevatedButton(
-          onPressed: controller.isLoading.value
-              ? null
-              : () {
-                  final title = titleController.text.trim();
-                  final content = contentController.text.trim();
-                  if (title.isEmpty || content.isEmpty) {
-                    Get.snackbar('Error', 'Title and content are required');
-                    return;
-                  }
-                  controller.addOrUpdateJournal(
-                    docId: docId,
-                    title: title,
-                    content: content,
-                    oldImageUrl: docData?['photoUrl'],
-                  );
-                  Get.back();
-                },
-          child: controller.isLoading.value
-              ? const CircularProgressIndicator(color: Colors.white)
-              : Text(docId == null ? 'Add' : 'Update'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: UmrahJournalController.accentColor,
-          ),
-        ),
-      ),
+      confirm: Obx(() => ElevatedButton(
+        onPressed: controller.isLoading.value ? null : () async {
+          await controller.addOrUpdateJournal(
+            docId: docId,
+            title: titleController.text.trim(),
+            content: contentController.text.trim(),
+            oldImageUrl: docData?['photoUrl'],
+          );
+          if (context.mounted) Navigator.of(context).pop();
+        },
+        style: ElevatedButton.styleFrom(backgroundColor: customIconBlue),
+        child: controller.isLoading.value 
+          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          : Text(docId == null ? 'Add' : 'Update', style: const TextStyle(color: Colors.white)),
+      )),
       cancel: TextButton(
-        onPressed: () => Get.back(),
-        child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
       ),
     );
   }
@@ -128,133 +109,62 @@ class UmrahJournalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: UmrahJournalController.primaryBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: UmrahJournalController.primaryBackgroundColor,
-        elevation: 0,
-        title: const Text(
-          'Umrah Journal',
-          style: TextStyle(color: Colors.white),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      extendBodyBehindAppBar: true,
+      appBar: CustomAppBar(
+        title: 'Umrah Journal',
+        showBackButton: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: () => showJournalDialog(),
+            onPressed: () => showJournalDialog(context),
           ),
         ],
       ),
-      body: Obx(() {
-        final docs = controller.journals;
-        if (docs.isEmpty) {
-          return const Center(
-            child: Text(
-              'Your journal is empty.',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
-            ),
-          );
-        }
-        return ListView.builder(
-          itemCount: docs.length,
-          itemBuilder: (context, i) {
-            final doc = docs[i];
-            final data = doc.data();
-            final timestamp = data['date'];
-            final formattedDate = timestamp != null
-                ? (timestamp as dynamic).toDate().toLocal().toString().split(
-                    ' ',
-                  )[0]
-                : 'No date';
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Card(
-                color: UmrahJournalController.cardBackgroundColor,
-                elevation: 3,
-                shadowColor: Colors.black.withOpacity(0.15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              data['title'] ?? '',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.redAccent,
-                              size: 22,
-                            ),
-                            onPressed: () => controller.deleteJournal(doc.id),
-                          ),
-                        ],
-                      ),
-                      if (data['photoUrl'] != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            data['photoUrl'],
-                            height: 180,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      if (data['photoUrl'] != null) const SizedBox(height: 12),
-                      Text(
-                        data['content'] ?? '',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 15,
-                          height: 1.5,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if ((data['content'] ?? '').isNotEmpty)
-                        const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 14,
-                            color: Colors.white70.withOpacity(0.8),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            formattedDate,
-                            style: TextStyle(
-                              color: Colors.white70.withOpacity(0.9),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [topGradientColor, bottomGradientColor],
+          ),
+        ),
+        child: SafeArea(
+          child: Obx(() {
+            final docs = controller.journals;
+            if (docs.isEmpty) {
+              return const Center(child: Text('Your journal is empty.', style: TextStyle(color: Colors.white70)));
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: docs.length,
+              itemBuilder: (context, i) {
+                final data = docs[i].data();
+                return Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(12),
+                    leading: data['photoUrl'] != null 
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(data['photoUrl'], width: 50, height: 50, fit: BoxFit.cover),
+                        )
+                      : const Icon(Icons.book, color: Colors.grey),
+                    title: Text(data['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(data['content'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      onPressed: () => controller.deleteJournal(docs[i].id),
+                    ),
+                    onTap: () => showJournalDialog(context, docData: data, docId: docs[i].id),
                   ),
-                ),
-              ),
+                );
+              },
             );
-          },
-        );
-      }),
+          }),
+        ),
+      ),
     );
   }
 }
