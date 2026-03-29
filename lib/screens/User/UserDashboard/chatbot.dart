@@ -14,7 +14,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   // 🔹 API Call Function
   Future<String> sendMessageToBot(String message) async {
-    final url = Uri.parse("http://192.168.1.13:5001/chat");
+    final url = Uri.parse("http://192.168.1.5:5000/api/chat");
 
     try {
       final response = await http.post(

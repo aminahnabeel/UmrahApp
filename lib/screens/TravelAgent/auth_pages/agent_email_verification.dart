@@ -104,7 +104,7 @@ class _AgentEmailVerificationScreenState
         await prefs.setString('userEmail', user?.email ?? '');
 
         // Navigate to home screen
-        Get.toNamed(AppRoutes.agentsignin);
+        Get.offAllNamed(AppRoutes.agentsignin);
       }
     } catch (e) {
       print('Error checking email verification: $e');
@@ -229,7 +229,7 @@ class _AgentEmailVerificationScreenState
               // Wrong Email Option
               TextButton(
                 onPressed: () {
-                  Get.toNamed(AppRoutes.agentsignin);
+                  Get.offAllNamed(AppRoutes.agentsignin);
                 },
                 child: Text(
                   'Wrong email? Go back to Login',

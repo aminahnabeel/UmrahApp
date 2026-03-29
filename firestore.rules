@@ -27,16 +27,17 @@ service cloud.firestore {
     }
 
     match /Users/{uid} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create, update, delete: if isSelf(uid) || isAdmin();
     }
 
     match /Profiles/{uid} {
-      allow read, create, update, delete: if isSelf(uid) || isAdmin();
+      allow read: if true;
+      allow create, update, delete: if isSelf(uid) || isAdmin();
     }
 
     match /TravelAgents/{agentId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create, update, delete: if isSelf(agentId) || isAdmin();
     }
 

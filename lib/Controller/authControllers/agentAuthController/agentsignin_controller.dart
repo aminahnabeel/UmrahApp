@@ -11,66 +11,64 @@ class AgentSigninController extends GetxController {
     BuildContext context,
   ) async {
     try {
-      // 1) Check TravelAgents collection for email
-      QuerySnapshot agentQuery = await FirebaseFirestore.instance
-          .collection('TravelAgents')
-          .where('email', isEqualTo: email.trim())
-          .get();
-
-      if (agentQuery.docs.isEmpty) {
-        _showError(context, 'This email is not registered as a Travel Agent.');
+      // 1) First, try to sign in with Firebase Auth
+      UserCredential userCredential;
+      try {
+        userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email.trim(),
+          password: password.trim(),
+        );
+      } on FirebaseAuthException catch (e) {
+        // If Firebase Auth login fails, show specific error
+        if (e.code == 'user-not-found') {
+          _showError(context, 'No user found for this email.');
+        } else if (e.code == 'wrong-password') {
+          _showError(context, 'Incorrect password.');
+        } else if (e.code == 'invalid-email') {
+          _showError(context, 'Invalid email address.');
+        } else {
+          _showError(context, 'Authentication failed: ${e.message}');
+        }
         return false;
       }
 
-      // 2) Sign in with Firebase Auth
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
-
       User? user = userCredential.user;
 
-      // 3) Check email verification
       if (user == null) {
         _showError(context, 'Login failed. User is null.');
         return false;
       }
 
-      if (!user.emailVerified) {
-        _showError(context, 'Please verify your email before logging in.');
-        return false;
-      }
-
-      // 4) Save session locally
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isEmailVerified', true);
-      await prefs.setString('userEmail', user.email ?? '');
-      await prefs.setString('userUID', user.uid);
-
-      // 5) Ensure TravelAgent profile exists by uid
+      // 2) Verify TravelAgent profile exists in Firestore by uid
       DocumentSnapshot profileSnapshot = await FirebaseFirestore.instance
           .collection('TravelAgents')
           .doc(user.uid)
           .get();
 
       if (!profileSnapshot.exists) {
-        _showError(context, 'Your Travel Agent profile could not be found.');
+        _showError(context,
+            'Your Travel Agent profile could not be found. Please contact support.');
         return false;
       }
 
-      return true;
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        _showError(context, 'No user found for this email.');
-      } else if (e.code == 'wrong-password') {
-        _showError(context, 'Incorrect password.');
-      } else {
-        _showError(context, 'Authentication error: ${e.message}');
+      // 3) If email not verified in Firebase, send verification email but allow login
+      if (!user.emailVerified) {
+        await user.sendEmailVerification();
+        debugPrint('Verification email sent to: ${user.email}');
+        // Allow login even if email not verified yet
       }
-      return false;
+
+      // 4) Save session locally
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isEmailVerified', user.emailVerified);
+      await prefs.setString('userEmail', user.email ?? '');
+      await prefs.setString('userUID', user.uid);
+
+      return true;
     } catch (e) {
-      _showError(context, 'Error: $e');
+      debugPrint('Unexpected error during login: $e');
+      _showError(context, 'An unexpected error occurred: $e');
       return false;
     }
   }

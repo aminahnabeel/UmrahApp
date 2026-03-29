@@ -1,11 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:smart_umrah_app/screens/User/auth_pages/email_verification.dart';
 
 class AgentSignupController extends GetxController {
   RxBool _isLoading = false.obs;
-  Future<void> agentSignUpUser(
+  Future<User?> agentSignUpUser(
     BuildContext context, {
     required String email,
     required String password,
@@ -13,12 +12,12 @@ class AgentSignupController extends GetxController {
   }) async {
     if (password.trim() != confirmPassword.trim()) {
       _showErrorSnackBar(context, 'Passwords do not match');
-      return;
+      return null;
     }
 
     if (email.trim().isEmpty || password.trim().isEmpty) {
       _showErrorSnackBar(context, 'Email and password cannot be empty');
-      return;
+      return null;
     }
 
     _isLoading.value = true;
@@ -38,20 +37,15 @@ class AgentSignupController extends GetxController {
         await user.sendEmailVerification();
         debugPrint("Verification email sent to: ${user.email}");
       }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              EmailVerificationScreen(emailAddress: user?.email ?? email),
-        ),
-      );
+      return user;
     } on FirebaseAuthException catch (e) {
       debugPrint("Firebase Auth Error: ${e.code} - ${e.message}");
       _showErrorSnackBar(context, _getErrorMessage(e));
+      return null;
     } catch (e) {
       debugPrint("Unexpected error during signup: $e");
       _showErrorSnackBar(context, 'Unexpected error: $e');
+      return null;
     } finally {
       _isLoading.value = false;
     }

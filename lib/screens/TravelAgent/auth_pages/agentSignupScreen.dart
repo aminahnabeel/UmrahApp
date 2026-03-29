@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:smart_umrah_app/Controller/authControllers/userauthcontroller/usersignup_controller.dart';
+import 'package:smart_umrah_app/Controller/authControllers/agentAuthController/agentsignup_controller.dart';
 import 'package:smart_umrah_app/Models/TravelAgentProfileData/travelAgent_profile_model.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/AgentData/agent_data.dart';
 import 'package:smart_umrah_app/getUserId/getUid.dart';
+import 'package:smart_umrah_app/routes/routes.dart';
 import 'package:smart_umrah_app/screens/TravelAgent/auth_pages/agent_email_verification.dart';
 import 'package:smart_umrah_app/validation/auth_validation.dart';
 import 'package:smart_umrah_app/widgets/customButton.dart';
@@ -13,7 +14,9 @@ class TravelAgentSignUpScreen extends StatelessWidget {
   TravelAgentSignUpScreen({super.key});
 
   final _formKey = GlobalKey<FormState>();
-  final SignupController signupController = Get.put(SignupController());
+  final AgentSignupController signupController = Get.put(
+    AgentSignupController(),
+  );
   final AuthFormValidation authFormValidation = AuthFormValidation();
 
   // Controllers
@@ -198,13 +201,17 @@ class TravelAgentSignUpScreen extends StatelessWidget {
                           _isLoading.value = true;
 
                           try {
-                            await signupController.signUpUser(
+                            final user = await signupController.agentSignUpUser(
                               context,
                               email: _emailController.text.trim(),
                               password: _passwordController.text.trim(),
                               confirmPassword: _confirmPasswordController.text
                                   .trim(),
                             );
+
+                            if (user == null) {
+                              return;
+                            }
 
                             final agentProfile = TravelAgentProfileModel(
                               id: getID(),
@@ -227,9 +234,9 @@ class TravelAgentSignUpScreen extends StatelessWidget {
                               "${agentProfile.name} Registered Successfully",
                               backgroundColor: Colors.green,
                             );
-                            Get.to(
+                            Get.off(
                               () => AgentEmailVerificationScreen(
-                                emailAddress: _emailController.text.trim(),
+                                emailAddress: user.email ?? _emailController.text.trim(),
                               ),
                             );
                           } catch (error) {
@@ -257,9 +264,7 @@ class TravelAgentSignUpScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pop(context);
-                          // Navigate to agent login page if exists
-                          Get.toNamed('/agent-login');
+                          Get.offNamed(AppRoutes.agentsignin);
                         },
                         child: const Text(
                           "Login",
