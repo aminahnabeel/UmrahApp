@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "13880865396",
+    "project_id": "umrahapp-7d068",
+    "storage_bucket": "umrahapp-7d068.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:13880865396:android:157c43efca3b8578115721",
+        "android_client_info": {
+          "package_name": "com.example.smart_umrah_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDphN6l_G8runYeJ9gyPrKw--8Cyb2f-z8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

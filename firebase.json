@@ -1,0 +1,28 @@
+{
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "umrahapp-7d068",
+					"appId": "1:13880865396:android:157c43efca3b8578115721",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "umrahapp-7d068",
+					"configurations": {
+						"android": "1:13880865396:android:157c43efca3b8578115721",
+						"ios": "1:13880865396:ios:e6c4e4f44b8b081f115721",
+						"macos": "1:13880865396:ios:e6c4e4f44b8b081f115721",
+						"web": "1:13880865396:web:d01c9343c0fac7ab115721",
+						"windows": "1:13880865396:web:8d04e58ae8099023115721"
+					}
+				}
+			}
+		}
+	},
+	"firestore": {
+		"rules": "firestore.rules"
+	}
+}
