@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:smart_umrah_app/ColorTheme/color_theme.dart';
+import 'package:smart_umrah_app/widgets/custom_app_bar.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
+
+  // Theme Colors
+  static const Color topGradientColor = Color(0xFF0D47A1);
+  static const Color bottomGradientColor = Color(0xFF1976D2);
+  static const Color customBlue = Color(0xFF0D47A1);
 
   // Sample notifications data
   final List<Map<String, String>> notifications = const [
@@ -31,74 +36,92 @@ class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorTheme.background,
-      appBar: AppBar(
-        backgroundColor: ColorTheme.background,
-        elevation: 4,
-        centerTitle: true,
-        title: const Text(
-          "Notifications",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white),
-        ),
+      extendBodyBehindAppBar: true,
+      appBar: CustomAppBar(
+        title: "Notifications",
+        showBackButton: true,
         actions: [
           IconButton(
             onPressed: () {
-              // Add functionality to mark all as read if needed
+              // Mark all as read functionality
             },
-            icon: const Icon(Icons.mark_email_read, color: Color(0xFF3B82F6)),
+            icon: const Icon(Icons.mark_email_read, color: Colors.white),
           ),
         ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final notification = notifications[index];
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF283645),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  spreadRadius: 1,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [topGradientColor, bottomGradientColor],
+          ),
+        ),
+        child: SafeArea(
+          child: notifications.isEmpty
+              ? const Center(
+                  child: Text(
+                    "No new notifications",
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  itemCount: notifications.length,
+                  itemBuilder: (context, index) {
+                    final notification = notifications[index];
+                    return Card(
+                      color: Colors.white,
+                      elevation: 2,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
+                        leading: CircleAvatar(
+                          backgroundColor: customBlue.withOpacity(0.1),
+                          child: const Icon(Icons.notifications_active, color: customBlue),
+                        ),
+                        title: Text(
+                          notification['title']!,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              notification['body']!,
+                              style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.access_time, size: 12, color: Colors.grey),
+                                const SizedBox(width: 4),
+                                Text(
+                                  notification['time']!,
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          // Action on tap
+                        },
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              leading: CircleAvatar(
-                backgroundColor: const Color(0xFF3B82F6).withOpacity(0.2),
-                child: const Icon(Icons.notifications, color: Color(0xFF3B82F6)),
-              ),
-              title: Text(
-                notification['title']!,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              subtitle: Text(
-                notification['body']!,
-                style: const TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-              trailing: Text(
-                notification['time']!,
-                style: const TextStyle(fontSize: 12, color: Colors.white54),
-              ),
-              onTap: () {
-                // Action when notification is tapped
-              },
-            ),
-          );
-        },
+        ),
       ),
     );
   }

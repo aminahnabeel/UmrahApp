@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class DuasTab extends StatefulWidget {
   const DuasTab({super.key});
@@ -16,9 +17,10 @@ class _DuasTabState extends State<DuasTab> {
   final List<Map<String, String>> duas = const [
     {
       "title": "Dua for Intention (Niyyah)",
-      "arabic": "لَبَّيْكَ اللّهُمَّ عُمْرَةً",
+      "arabic": "لَبَّيْكَ اللَّهُمَّ عُمْرَةً",
       "transliteration": "Labbayka Allahumma ‘Umratan",
       "translation": "Here I am, O Allah, for ‘Umrah.",
+      "audio": "assets/dua_niyyah.mp3",
     },
     {
       "title": "Dua at Miqat (Talbiyah)",
@@ -28,12 +30,14 @@ class _DuasTabState extends State<DuasTab> {
           "Labbayka Allahumma labbayk, labbayka laa shareeka laka labbayk, inna al-hamda wan-ni‘mata laka wal-mulk, laa shareeka lak.",
       "translation":
           "Here I am, O Allah, here I am. Here I am, You have no partner, here I am. Surely all praise, blessings, and sovereignty belong to You. You have no partner.",
+      "audio": "assets/dua_talbiyah.mp3",
     },
     {
       "title": "Dua when entering Masjid al-Haram",
       "arabic": "اللّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",
       "transliteration": "Allahumma aftah li abwaba rahmatika.",
       "translation": "O Allah, open for me the doors of Your mercy.",
+      "audio": "assets/dua_entering_masjid.mp3",
     },
     {
       "title": "Dua upon seeing the Kaaba",
@@ -42,12 +46,14 @@ class _DuasTabState extends State<DuasTab> {
           "Allahumma zid hadha al-bayta tashreefan wa ta‘theeman.",
       "translation":
           "O Allah, increase this House in honor, greatness, and reverence.",
+      "audio": "assets/dua_seeing_kaaba.mp3",
     },
     {
       "title": "Dua at the Black Stone (Hajr al-Aswad)",
       "arabic": "بِسْمِ اللّهِ وَاللّهُ أَكْبَرُ",
       "transliteration": "Bismillahi wallahu akbar.",
       "translation": "In the name of Allah, Allah is the Greatest.",
+      "audio": "assets/dua_black_stone.mp3",
     },
     {
       "title": "Dua between Rukn al-Yamani and Hajr al-Aswad",
@@ -57,6 +63,7 @@ class _DuasTabState extends State<DuasTab> {
           "Rabbana atina fid-dunya hasanatan wa fil-akhirati hasanatan wa qina ‘adhaban-nar.",
       "translation":
           "Our Lord, give us good in this world and good in the Hereafter, and save us from the punishment of the Fire.",
+      "audio": "assets/dua_between_rukn_yamani_hajr_aswad.mp3",
     },
     {
       "title": "Dua at Multazam (between Hajr al-Aswad and Kaaba door)",
@@ -66,6 +73,7 @@ class _DuasTabState extends State<DuasTab> {
           "Allahumma ya muqallibal-quloob thabbit qalbi ‘ala deenik.",
       "translation":
           "O Allah, Controller of hearts, make my heart firm upon Your religion.",
+      "audio": "assets/dua_multazam.mp3",
     },
     {
       "title": "Dua at Maqam Ibrahim",
@@ -73,6 +81,7 @@ class _DuasTabState extends State<DuasTab> {
       "transliteration": "Wattakhidhu min Maqami Ibrahima musalla.",
       "translation":
           "And take the standing place of Ibrahim as a place of prayer.",
+      "audio": "assets/dua_maqam_ibrahim.mp3",
     },
     {
       "title": "Dua while drinking Zamzam",
@@ -82,6 +91,7 @@ class _DuasTabState extends State<DuasTab> {
           "Allahumma aj‘alni min al-mutatahhirin warzuqni rizqan wasi‘an.",
       "translation":
           "O Allah, make me among those who purify themselves and grant me abundant provision.",
+      "audio": "assets/dua_drinking_zamzam.mp3",
     },
     {
       "title": "Dua at Safa (beginning Sa’i)",
@@ -91,6 +101,7 @@ class _DuasTabState extends State<DuasTab> {
           "Inna as-Safa wal-Marwata min sha‘a’irillah… Abda’u bima bada’a Allahu bihi.",
       "translation":
           "Indeed, Safa and Marwah are among the symbols of Allah… I begin with what Allah began with.",
+      "audio": "assets/dua_safa.mp3",
     },
     {
       "title": "Dua during Sa’i (between Safa and Marwah)",
@@ -98,16 +109,26 @@ class _DuasTabState extends State<DuasTab> {
       "transliteration": "Rabbi ighfir warham innaka anta al-‘azzu al-akram.",
       "translation":
           "My Lord, forgive and have mercy, indeed You are the Mighty, the Most Generous.",
+      "audio": "assets/dua_during_sai.mp3",
     },
     {
       "title": "Dua after completing Umrah",
       "arabic": "الْحَمْدُ لِلّهِ عَلَى تَمَامِ الْعُمْرَةِ",
       "transliteration": "Alhamdulillahi ‘ala tamaam al-‘Umrah.",
       "translation": "All praise is for Allah for the completion of ‘Umrah.",
+      "audio": "assets/dua_after_umrah.mp3",
     },
   ];
 
   String searchQuery = "";
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +195,29 @@ class _DuasTabState extends State<DuasTab> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        leading: const Icon(Icons.book, color: accentColor),
+                        leading: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.book, color: accentColor),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.volume_up,
+                                color: accentColor,
+                              ),
+                              tooltip: 'Play Audio',
+                              onPressed: () async {
+                                final audioPath = dua["audio"];
+                                if (audioPath != null) {
+                                  await _audioPlayer.stop();
+                                  await _audioPlayer.play(
+                                    AssetSource(audioPath),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                         collapsedIconColor: textColorPrimary,
                         iconColor: accentColor,
                         children: [

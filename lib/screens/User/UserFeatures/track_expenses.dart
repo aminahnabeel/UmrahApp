@@ -2,232 +2,190 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_umrah_app/Controller/userControllers/expense_track_controller.dart';
-import 'package:smart_umrah_app/widgets/ExpenseTrackForm/enpense_track.dart';
+import 'package:smart_umrah_app/Models/ExpensesModel_expenses_model.dart';
+import 'package:smart_umrah_app/widgets/custom_app_bar.dart';
 
 class TrackExpenses extends StatelessWidget {
   TrackExpenses({super.key});
 
   final ExpenseController expenseController = Get.put(ExpenseController());
 
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _itemController = TextEditingController();
-  final TextEditingController _placeController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
+  // Theme Colors
+  static const Color customBlue = Color(0xFF0D47A1);
+
+  void _showExpenseDialog(BuildContext context, {Expense? expense}) {
+    bool isEdit = expense != null;
+    final _formKey = GlobalKey<FormState>();
+    
+    // Controllers initialization
+    final _itemController = TextEditingController(text: isEdit ? expense.item : "");
+    final _placeController = TextEditingController(text: isEdit ? expense.place : "");
+    final _amountController = TextEditingController(text: isEdit ? expense.amount.toString() : "");
+
+    Get.defaultDialog(
+      title: isEdit ? "Edit Expense" : "Add Expense",
+      backgroundColor: Colors.white,
+      barrierDismissible: false, // User ko button hi use karna parega band karne ke liye
+      content: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildTextField(_itemController, "Item Name", Icons.shopping_bag),
+            const SizedBox(height: 10),
+            _buildTextField(_placeController, "Place/Shop", Icons.location_on),
+            const SizedBox(height: 10),
+            _buildTextField(_amountController, "Amount (SAR)", Icons.money, isNumber: true),
+          ],
+        ),
+      ),
+      confirm: ElevatedButton(
+        onPressed: () async {
+          if (_formKey.currentState!.validate()) {
+            // Naya Expense object banana
+            final newExpense = Expense(
+              id: isEdit ? expense.id : null,
+              item: _itemController.text,
+              place: _placeController.text,
+              amount: double.parse(_amountController.text),
+              date: isEdit ? expense.date : DateTime.now(),
+            );
+
+            // Firebase operations
+            if (isEdit) {
+              await expenseController.editExpense(newExpense);
+            } else {
+              await expenseController.addExpense(newExpense);
+            }
+            
+            // Automatic Dialog Dismissal
+            Get.back(); 
+            
+            Get.snackbar(
+              "Success", 
+              isEdit ? "Expense Updated" : "Expense Added",
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+              duration: const Duration(seconds: 2),
+            );
+          }
+        },
+        style: ElevatedButton.styleFrom(backgroundColor: customBlue),
+        child: Text(isEdit ? "Update" : "Save", style: const TextStyle(color: Colors.white)),
+      ),
+      cancel: TextButton(
+        onPressed: () => Get.back(), // Cancel par automatically dialog hat jayega
+        child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isNumber = false}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: customBlue),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      validator: (value) => value == null || value.isEmpty ? "Required" : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Track Expenses",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        centerTitle: true,
-        foregroundColor: Colors.white,
-        backgroundColor: Color(0xFF101820),
-        elevation: 6,
-      ),
+      extendBodyBehindAppBar: true,
+      appBar: const CustomAppBar(title: "Track Expenses", showBackButton: true),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF1B2A3B), Color(0xFF101820)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+            colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
           ),
         ),
-        child: Column(
-          children: [
-            Expanded(
-              child: Obx(() {
-                if (expenseController.expenses.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      "No expenses added yet",
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
-                    ),
-                  );
-                }
-
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    int crossAxisCount = 1;
-                    double width = constraints.maxWidth;
-                    if (width >= 600 && width < 900) crossAxisCount = 2;
-                    if (width >= 900) crossAxisCount = 3;
-
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 3,
-                      ),
-                      itemCount: expenseController.expenses.length,
-                      itemBuilder: (context, index) {
-                        final expense = expenseController.expenses[index];
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF283645),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                spreadRadius: 2,
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF3B82F6).withOpacity(0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.receipt_long,
-                                  color: Color(0xFF3B82F6),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      expense.item,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      expense.place,
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                    Text(
-                                      DateFormat(
-                                        "dd MMM yyyy",
-                                      ).format(expense.date),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white60,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "${expense.amount.toStringAsFixed(2)} SAR",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF3B82F6),
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.amber,
-                                          size: 22,
-                                        ),
-                                        onPressed: () => showEditExpenseDialog(
-                                          context,
-                                          expense,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.redAccent,
-                                          size: 22,
-                                        ),
-                                        onPressed: () => expenseController
-                                            .deleteExpense(expense.id!),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: Obx(() {
+                  if (expenseController.expenses.isEmpty) {
+                    return const Center(
+                      child: Text("No expenses yet", style: TextStyle(color: Colors.white70)),
                     );
-                  },
-                );
-              }),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: expenseController.expenses.length,
+                    itemBuilder: (context, index) {
+                      final exp = expenseController.expenses[index];
+                      return Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        child: ListTile(
+                          leading: const CircleAvatar(
+                            backgroundColor: Color(0xFFE3F2FD),
+                            child: Icon(Icons.receipt_long, color: customBlue),
+                          ),
+                          title: Text(exp.item, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text("${exp.place} • ${DateFormat("dd MMM").format(exp.date)}"),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text("${exp.amount} SAR", style: const TextStyle(fontWeight: FontWeight.bold, color: customBlue)),
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.amber, size: 20),
+                                onPressed: () => _showExpenseDialog(context, expense: exp),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.redAccent, size: 20),
+                                onPressed: () => expenseController.deleteExpense(exp.id!),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: ElevatedButton.icon(
-                  onPressed: () => showAddExpenseDialog(context),
+                  onPressed: () => _showExpenseDialog(context),
+                  icon: const Icon(Icons.add_circle),
+                  label: const Text("Add New Expense", style: TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text(
-                    "Add Expense",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    backgroundColor: Colors.white,
+                    foregroundColor: customBlue,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Obx(() {
-              return Container(
+
+              Obx(() => Container(
                 padding: const EdgeInsets.all(20),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF15222F),
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(18),
-                  ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Total Expenses:",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      "${expenseController.totalExpense.value.toStringAsFixed(2)} SAR",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.amber,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text("Total Expenses", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text("${expenseController.totalExpense.value.toStringAsFixed(2)} SAR", 
+                        style: const TextStyle(fontSize: 20, color: customBlue, fontWeight: FontWeight.bold)),
                   ],
                 ),
-              );
-            }),
-          ],
+              )),
+            ],
+          ),
         ),
       ),
     );

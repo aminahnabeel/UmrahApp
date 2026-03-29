@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TextGuideTab extends StatefulWidget {
   const TextGuideTab({super.key});
@@ -17,6 +18,8 @@ class _TextGuideTabState extends State<TextGuideTab> {
 
   // Track translation state for each step
   List<bool> _isUrduList = List.generate(5, (_) => false);
+  // Track checked state for each step
+  List<bool> _isCheckedList = List.generate(5, (_) => false);
 
   Map<String, dynamic> enData = {};
   Map<String, dynamic> urData = {};
@@ -25,6 +28,25 @@ class _TextGuideTabState extends State<TextGuideTab> {
   void initState() {
     super.initState();
     loadJson();
+    _loadCheckedState();
+  }
+
+  Future<void> _loadCheckedState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final checked =
+        prefs.getStringList('umrah_guide_checked') ??
+        List.generate(5, (_) => 'false');
+    setState(() {
+      _isCheckedList = checked.map((e) => e == 'true').toList();
+    });
+  }
+
+  Future<void> _saveCheckedState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      'umrah_guide_checked',
+      _isCheckedList.map((e) => e.toString()).toList(),
+    );
   }
 
   Future<void> loadJson() async {
@@ -61,29 +83,51 @@ class _TextGuideTabState extends State<TextGuideTab> {
           ...List.generate(5, (index) {
             final i = index + 1;
             final isUrdu = _isUrduList[index];
+            final isChecked = _isCheckedList[index];
             final data = getCurrentData(index);
             return Card(
-              color: cardBackgroundColor,
+              color: isChecked ? Colors.green.shade700 : cardBackgroundColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
               margin: const EdgeInsets.only(bottom: 16.0),
               child: ExpansionTile(
                 tilePadding: const EdgeInsets.all(16.0),
-
-                title: Text(
-                  data['step${i}_title'] ?? '',
-                  style: const TextStyle(
-                    color: textColorPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+                title: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        setState(() {
+                          _isCheckedList[index] = !_isCheckedList[index];
+                        });
+                        await _saveCheckedState();
+                      },
+                      child: Icon(
+                        isChecked ? Icons.check_circle : _getIcon(i),
+                        color: isChecked ? Colors.white : accentColor,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        data['step${i}_title'] ?? '',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          decoration: isChecked
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                        textDirection: isUrdu
+                            ? TextDirection.rtl
+                            : TextDirection.ltr,
+                      ),
+                    ),
+                  ],
                 ),
-
-                leading: Icon(_getIcon(i), color: accentColor),
                 collapsedIconColor: textColorPrimary,
                 iconColor: accentColor,
-
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
