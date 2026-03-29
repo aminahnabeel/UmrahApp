@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_umrah_app/routes/routes.dart';
 import 'package:smart_umrah_app/screens/User/chatScreen.dart';
 
 class AllChatsScreen extends StatelessWidget {
@@ -38,10 +39,94 @@ class AllChatsScreen extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No chats yet"));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.chat_bubble_outline,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      "No chats yet",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Start a chat with a travel agent to see conversations here.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 18),
+                    ElevatedButton.icon(
+                      onPressed: () => Get.toNamed(AppRoutes.viewtravelagent),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.add_comment_outlined),
+                      label: const Text("Start Chat"),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
-          final chats = snapshot.data!.docs;
+          final chats = snapshot.data!.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final participants = List<String>.from(data['participants'] ?? []);
+            return participants.length == 2;
+          }).toList();
+
+          if (chats.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.chat_bubble_outline,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      "No chats yet",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Start a chat with a travel agent to see conversations here.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 18),
+                    ElevatedButton.icon(
+                      onPressed: () => Get.toNamed(AppRoutes.viewtravelagent),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.add_comment_outlined),
+                      label: const Text("Start Chat"),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
           return ListView.builder(
             itemCount: chats.length,
@@ -195,24 +280,10 @@ class AllChatsScreen extends StatelessWidget {
                     ),
 
                     onTap: () async {
-                      final chatId = isGroupChat
-                          ? chatDoc.id
-                          : getChatId(currentUserId, partnerId);
-
+                      final chatId = chatDoc.id;
                       final chatRef = _firestore
                           .collection('chats')
                           .doc(chatId);
-
-                      final chatSnapshot = await chatRef.get();
-                      if (!chatSnapshot.exists) {
-                        await chatRef.set({
-                          'participants': [currentUserId, partnerId],
-                          'lastMessage': '',
-                          'lastTimestamp': FieldValue.serverTimestamp(),
-                          'lastMessageStatus': 'sent',
-                          'lastSenderId': currentUserId,
-                        });
-                      }
 
                       // Reset unread count
                       try {
@@ -221,7 +292,8 @@ class AllChatsScreen extends StatelessWidget {
 
                       Get.to(
                         () => ChatScreen(
-                          partnerId: isGroupChat ? chatDoc.id : partnerId,
+                          chatId: chatId,
+                          partnerId: partnerId,
                           partnerName: partnerName,
                           partnerImageUrl: profileImageUrl,
                         ),
@@ -282,12 +354,6 @@ class AllChatsScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String getChatId(String userId1, String userId2) {
-    return userId1.hashCode <= userId2.hashCode
-        ? '${userId1}_$userId2'
-        : '${userId2}_$userId1';
   }
 
   String _formatTime(DateTime dateTime) {

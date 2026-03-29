@@ -66,6 +66,7 @@ flutter:
     - assets/dua_safa.mp3
     - assets/dua_during_sai.mp3
     - assets/dua_after_umrah.mp3
+    - assets/Thawaaf.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

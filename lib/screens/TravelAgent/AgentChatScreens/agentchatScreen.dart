@@ -4,21 +4,41 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_umrah_app/Controller/AgentControllers/agent_chat_controller.dart';
 
-class AgentChatScreen extends StatelessWidget {
+class AgentChatScreen extends StatefulWidget {
+  final String chatId;
   final String partnerId;
   final String partnerName;
   final String? partnerImageUrl;
 
-  final TextEditingController _messageController = TextEditingController();
-  final AgentChatController chatController = Get.put(AgentChatController());
-
   AgentChatScreen({
     super.key,
+    required this.chatId,
     required this.partnerId,
     required this.partnerName,
     this.partnerImageUrl,
-  }) {
-    chatController.initChat(partnerId);
+  });
+
+  @override
+  State<AgentChatScreen> createState() => _AgentChatScreenState();
+}
+
+class _AgentChatScreenState extends State<AgentChatScreen> {
+  late final TextEditingController _messageController;
+  late final AgentChatController chatController;
+
+  @override
+  void initState() {
+    super.initState();
+    _messageController = TextEditingController();
+    chatController = Get.put(AgentChatController(), tag: widget.chatId);
+    chatController.initChat(widget.chatId);
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    Get.delete<AgentChatController>(tag: widget.chatId, force: true);
+    super.dispose();
   }
 
   Widget _buildTick(String status) {
@@ -40,17 +60,19 @@ class AgentChatScreen extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundImage: partnerImageUrl != null
-                  ? NetworkImage(partnerImageUrl!)
+              backgroundImage: widget.partnerImageUrl != null
+                  ? NetworkImage(widget.partnerImageUrl!)
                   : null,
-              child: partnerImageUrl == null || partnerImageUrl!.isEmpty
+              child:
+                  widget.partnerImageUrl == null ||
+                      widget.partnerImageUrl!.isEmpty
                   ? const Icon(Icons.person, color: Colors.white)
                   : null,
               backgroundColor: Colors.deepPurple,
             ),
             const SizedBox(width: 10),
             Text(
-              partnerName,
+              widget.partnerName,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -65,7 +87,6 @@ class AgentChatScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               final messages = chatController.messages;
-              final participantNames = chatController.participantNames;
 
               if (messages.isEmpty) {
                 return const Center(child: Text("No messages yet"));
@@ -120,10 +141,6 @@ class AgentChatScreen extends StatelessWidget {
                         final data = msg.data() as Map<String, dynamic>;
                         final isMe =
                             data['senderId'] == chatController.currentUserId;
-                        final senderId = data['senderId'] as String? ?? '';
-                        final senderName =
-                            participantNames[senderId] ??
-                            (isMe ? 'You' : 'Unknown');
 
                         final ts = data['timestamp'] as Timestamp?;
                         String timeText = ts != null
@@ -178,20 +195,6 @@ class AgentChatScreen extends StatelessWidget {
                                   ? CrossAxisAlignment.end
                                   : CrossAxisAlignment.start,
                               children: [
-                                if (chatController.isGroupChat && !isMe)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8.0,
-                                      bottom: 4,
-                                    ),
-                                    child: Text(
-                                      senderName,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   margin: const EdgeInsets.symmetric(
@@ -210,7 +213,8 @@ class AgentChatScreen extends StatelessWidget {
                                         : CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        data['text'],
+                                        (data['message'] ?? data['text'] ?? '')
+                                            .toString(),
                                         style: TextStyle(
                                           color: isMe
                                               ? Colors.white
@@ -273,7 +277,7 @@ class AgentChatScreen extends StatelessWidget {
                 IconButton(
                   onPressed: () {
                     chatController.sendMessage(
-                      partnerId,
+                      widget.partnerId,
                       _messageController.text,
                     );
                     _messageController.clear();

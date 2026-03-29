@@ -28,7 +28,7 @@ class SmartUmrahApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0XFF263442)),
       ),
-      initialRoute: AppRoutes.landingscreen,
+      initialRoute: AppRoutes.logo,
       getPages: AppRoutes().getpags,
     );
   }

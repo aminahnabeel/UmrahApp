@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -9,23 +11,21 @@ class AgentChatController extends GetxController {
 
   RxList<QueryDocumentSnapshot> messages = <QueryDocumentSnapshot>[].obs;
   late String chatId;
-  bool isGroupChat = false;
   RxMap<String, String> participantNames = <String, String>{}.obs;
+  StreamSubscription<QuerySnapshot>? _messagesSubscription;
+  StreamSubscription<DocumentSnapshot>? _chatSubscription;
 
-  void initChat(String partnerId) async {
-    // Detect if partnerId is an existing chat document id (group chat)
-    final docSnap = await _firestore.collection('chats').doc(partnerId).get();
-    if (docSnap.exists) {
-      isGroupChat = true;
-      chatId = partnerId; // Use the existing chat doc id
-    } else {
-      isGroupChat = false;
-      chatId = _getChatId(currentUserId, partnerId);
-      await _createChatIfNotExists(partnerId);
-    }
+  Future<void> initChat(String existingChatId) async {
+    chatId = existingChatId;
 
-    // Stream messages
-    _firestore
+    try {
+      await _firestore.collection('chats').doc(chatId).update({
+        'unreadCount_$currentUserId': 0,
+      });
+    } catch (_) {}
+
+    _messagesSubscription?.cancel();
+    _messagesSubscription = _firestore
         .collection('chats')
         .doc(chatId)
         .collection('messages')
@@ -33,54 +33,34 @@ class AgentChatController extends GetxController {
         .snapshots()
         .listen((snapshot) {
           messages.value = snapshot.docs;
+          _markIncomingAsSeen();
         });
 
-    // Listen to chat doc changes to keep participant list up-to-date
-    _firestore.collection('chats').doc(chatId).snapshots().listen((doc) {
-      if (doc.exists) {
-        final map = doc.data() as Map<String, dynamic>;
-        final parts = List<String>.from(map['participants'] ?? []);
-        _fetchParticipantNames(parts);
-      }
-    });
-
-    // For 1:1 chats, mark sent messages as seen for this user
-    if (!isGroupChat) {
-      _firestore
-          .collection('chats')
-          .doc(chatId)
-          .collection('messages')
-          .where('receiverId', isEqualTo: currentUserId)
-          .where('status', isEqualTo: 'sent')
-          .get()
-          .then((snapshot) {
-            for (var doc in snapshot.docs) {
-              doc.reference.update({'status': 'seen'});
-            }
-          });
-    }
+    _chatSubscription?.cancel();
+    _chatSubscription = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .snapshots()
+        .listen((doc) {
+          if (doc.exists) {
+            final map = doc.data() as Map<String, dynamic>;
+            final parts = List<String>.from(map['participants'] ?? []);
+            _fetchParticipantNames(parts);
+          }
+        });
   }
 
-  String _getChatId(String userId1, String userId2) {
-    return userId1.hashCode <= userId2.hashCode
-        ? '${userId1}_$userId2'
-        : '${userId2}_$userId1';
-  }
+  Future<void> _markIncomingAsSeen() async {
+    final sentToMe = await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .where('receiverId', isEqualTo: currentUserId)
+        .where('status', isEqualTo: 'sent')
+        .get();
 
-  Future<void> _createChatIfNotExists(String partnerId) async {
-    final chatDoc = await _firestore.collection('chats').doc(chatId).get();
-    if (!chatDoc.exists) {
-      await _firestore.collection('chats').doc(chatId).set({
-        'participants': [currentUserId, partnerId],
-        'lastMessage': '',
-        'lastTimestamp': FieldValue.serverTimestamp(),
-      });
-    }
-    // Fetch participant names for this chat doc
-    final createdDoc = await _firestore.collection('chats').doc(chatId).get();
-    if (createdDoc.exists) {
-      final parts = List<String>.from(createdDoc.data()?['participants'] ?? []);
-      await _fetchParticipantNames(parts);
+    for (final doc in sentToMe.docs) {
+      await doc.reference.update({'status': 'seen'});
     }
   }
 
@@ -113,14 +93,17 @@ class AgentChatController extends GetxController {
     }
   }
 
-  Future<void> sendMessage(String chatId, String text) async {
+  Future<void> sendMessage(String partnerId, String text) async {
     if (text.trim().isEmpty) return;
+    final trimmedText = text.trim();
 
     final chatRef = _firestore.collection('chats').doc(chatId);
 
     final messageData = {
-      'text': text.trim(),
+      'message': trimmedText,
+      'text': trimmedText,
       'senderId': currentUserId,
+      'receiverId': partnerId,
       'timestamp': FieldValue.serverTimestamp(),
       'status': 'sent',
       'deletedFor': [],
@@ -130,7 +113,7 @@ class AgentChatController extends GetxController {
 
     // Update last message info
     await chatRef.update({
-      'lastMessage': text,
+      'lastMessage': trimmedText,
       'lastTimestamp': FieldValue.serverTimestamp(),
       'lastMessageStatus': 'sent',
       'lastSenderId': currentUserId,
@@ -178,5 +161,12 @@ class AgentChatController extends GetxController {
 
   String formatTime(DateTime dateTime) {
     return DateFormat("hh:mm a").format(dateTime);
+  }
+
+  @override
+  void onClose() {
+    _messagesSubscription?.cancel();
+    _chatSubscription?.cancel();
+    super.onClose();
   }
 }

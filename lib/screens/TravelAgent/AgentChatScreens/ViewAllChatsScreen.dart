@@ -54,7 +54,7 @@ class AgentViewAllChatsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Start a chat by tapping the + button",
+                    "Incoming chats from users will appear here",
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -62,7 +62,36 @@ class AgentViewAllChatsScreen extends StatelessWidget {
             );
           }
 
-          final chats = snapshot.data!.docs;
+          final chats = snapshot.data!.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final participants = List<String>.from(data['participants'] ?? []);
+            return participants.length == 2;
+          }).toList();
+
+          if (chats.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 60,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "No chats yet",
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Incoming chats from users will appear here",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
 
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -97,10 +126,14 @@ class AgentViewAllChatsScreen extends StatelessWidget {
                     ? null
                     : _firestore.collection('Users').doc(partnerId).get(),
                 builder: (context, userSnapshot) {
+                  final userData =
+                      userSnapshot.data?.data() as Map<String, dynamic>?;
                   String partnerName = isGroupChat
                       ? data['groupName'] ?? "Group Chat"
-                      : (userSnapshot.data?.get('name') ?? "Unknown");
-                  String? profileImageUrl = isGroupChat ? null : '';
+                      : (userData?['name'] ?? "Unknown");
+                  String? profileImageUrl = isGroupChat
+                      ? null
+                      : userData?['profileImageUrl'];
 
                   return ListTile(
                     leading: CircleAvatar(
@@ -143,28 +176,20 @@ class AgentViewAllChatsScreen extends StatelessWidget {
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     onTap: () async {
-                      if (!isGroupChat) {
-                        final chatId = getChatId(currentUserId, partnerId);
-                        final chatRef = _firestore
+                      final unreadCountKey = 'unreadCount_$currentUserId';
+                      try {
+                        await _firestore
                             .collection('chats')
-                            .doc(chatId);
-                        final chatSnapshot = await chatRef.get();
-                        if (!chatSnapshot.exists) {
-                          await chatRef.set({
-                            'participants': [currentUserId, partnerId],
-                            'lastMessage': '',
-                            'lastTimestamp': FieldValue.serverTimestamp(),
-                            'lastMessageStatus': 'sent',
-                            'lastSenderId': currentUserId,
-                          });
-                        }
-                      }
+                            .doc(chatDoc.id)
+                            .update({unreadCountKey: 0});
+                      } catch (_) {}
 
                       Get.to(
                         () => AgentChatScreen(
-                          partnerId: isGroupChat ? chatDoc.id : partnerId,
+                          chatId: chatDoc.id,
+                          partnerId: partnerId,
                           partnerName: partnerName,
-                          partnerImageUrl: '',
+                          partnerImageUrl: profileImageUrl,
                         ),
                       );
                     },
@@ -228,12 +253,6 @@ class AgentViewAllChatsScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String getChatId(String userId1, String userId2) {
-    return userId1.hashCode <= userId2.hashCode
-        ? '${userId1}_$userId2'
-        : '${userId2}_$userId1';
   }
 
   String _formatTime(DateTime dateTime) {

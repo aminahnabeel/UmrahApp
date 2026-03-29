@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
@@ -9,29 +11,21 @@ class ChatController extends GetxController {
 
   RxList<QueryDocumentSnapshot> messages = <QueryDocumentSnapshot>[].obs;
   late String chatId;
-  bool isGroupChat = false;
   RxMap<String, String> participantNames = <String, String>{}.obs;
+  StreamSubscription<QuerySnapshot>? _messagesSubscription;
+  StreamSubscription<DocumentSnapshot>? _chatSubscription;
 
-  void initChat(String partnerId) async {
-    // If partnerId is an existing chat doc id, treat as group chat
-    final docSnap = await _firestore.collection('chats').doc(partnerId).get();
-    if (docSnap.exists) {
-      isGroupChat = true;
-      chatId = partnerId;
-      // Reset unread count for current user when opening a group chat
-      try {
-        _firestore.collection('chats').doc(chatId).update({
-          'unreadCount_$currentUserId': 0,
-        });
-      } catch (_) {}
-    } else {
-      isGroupChat = false;
-      chatId = _getChatId(currentUserId, partnerId);
-      await _createChatIfNotExists(partnerId);
-    }
+  Future<void> initChat(String existingChatId) async {
+    chatId = existingChatId;
 
-    // Stream messages
-    _firestore
+    try {
+      await _firestore.collection('chats').doc(chatId).update({
+        'unreadCount_$currentUserId': 0,
+      });
+    } catch (_) {}
+
+    _messagesSubscription?.cancel();
+    _messagesSubscription = _firestore
         .collection('chats')
         .doc(chatId)
         .collection('messages')
@@ -39,52 +33,34 @@ class ChatController extends GetxController {
         .snapshots()
         .listen((snapshot) {
           messages.value = snapshot.docs;
+          _markIncomingAsSeen();
         });
 
-    // Listen to chat doc changes to keep participant list updated
-    _firestore.collection('chats').doc(chatId).snapshots().listen((doc) {
-      if (doc.exists) {
-        final map = doc.data() as Map<String, dynamic>;
-        final parts = List<String>.from(map['participants'] ?? []);
-        _fetchParticipantNames(parts);
-      }
-    });
-    // Mark 'sent' messages as seen only for 1:1 chats
-    if (!isGroupChat) {
-      _firestore
-          .collection('chats')
-          .doc(chatId)
-          .collection('messages')
-          .where('receiverId', isEqualTo: currentUserId)
-          .where('status', isEqualTo: 'sent')
-          .get()
-          .then((snapshot) {
-            for (var doc in snapshot.docs) {
-              doc.reference.update({'status': 'seen'});
-            }
-          });
-    }
+    _chatSubscription?.cancel();
+    _chatSubscription = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .snapshots()
+        .listen((doc) {
+          if (doc.exists) {
+            final map = doc.data() as Map<String, dynamic>;
+            final parts = List<String>.from(map['participants'] ?? []);
+            _fetchParticipantNames(parts);
+          }
+        });
   }
 
-  String _getChatId(String userId1, String userId2) {
-    return userId1.hashCode <= userId2.hashCode
-        ? '${userId1}_$userId2'
-        : '${userId2}_$userId1';
-  }
+  Future<void> _markIncomingAsSeen() async {
+    final sentToMe = await _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .where('receiverId', isEqualTo: currentUserId)
+        .where('status', isEqualTo: 'sent')
+        .get();
 
-  Future<void> _createChatIfNotExists(String partnerId) async {
-    final chatDoc = await _firestore.collection('chats').doc(chatId).get();
-    if (!chatDoc.exists) {
-      await _firestore.collection('chats').doc(chatId).set({
-        'participants': [currentUserId, partnerId],
-        'lastMessage': '',
-        'lastTimestamp': FieldValue.serverTimestamp(),
-      });
-    }
-    final createdDoc = await _firestore.collection('chats').doc(chatId).get();
-    if (createdDoc.exists) {
-      final parts = List<String>.from(createdDoc.data()?['participants'] ?? []);
-      await _fetchParticipantNames(parts);
+    for (final doc in sentToMe.docs) {
+      await doc.reference.update({'status': 'seen'});
     }
   }
 
@@ -119,11 +95,13 @@ class ChatController extends GetxController {
 
   Future<void> sendMessage(String partnerId, String messageText) async {
     if (messageText.trim().isEmpty) return;
+    final trimmedMessage = messageText.trim();
 
     final messageData = {
       'senderId': currentUserId,
-      'receiverId': isGroupChat ? '' : partnerId,
-      'text': messageText,
+      'receiverId': partnerId,
+      'message': trimmedMessage,
+      'text': trimmedMessage,
       'timestamp': FieldValue.serverTimestamp(),
       'status': 'sent',
       'deletedFor': [],
@@ -136,41 +114,18 @@ class ChatController extends GetxController {
 
     await messageRef.add(messageData);
 
-    if (isGroupChat) {
-      await _firestore.collection('chats').doc(chatId).set({
-        'lastMessage': messageText,
-        'lastTimestamp': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      // Increment unread counter for every participant except the sender
-      final chatDoc = await _firestore.collection('chats').doc(chatId).get();
-      if (chatDoc.exists) {
-        final participants = List<String>.from(
-          chatDoc.data()?['participants'] ?? [],
-        );
-        for (final p in participants) {
-          if (p == currentUserId) continue;
-          try {
-            await _firestore.collection('chats').doc(chatId).update({
-              'unreadCount_$p': FieldValue.increment(1),
-            });
-          } catch (_) {
-            // ignore update errors
-          }
-        }
-      }
-    } else {
-      await _firestore.collection('chats').doc(chatId).set({
-        'participants': [currentUserId, partnerId],
-        'lastMessage': messageText,
-        'lastTimestamp': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      // Increment unread for the other user in a 1:1 chat
-      try {
-        await _firestore.collection('chats').doc(chatId).update({
-          'unreadCount_$partnerId': FieldValue.increment(1),
-        });
-      } catch (_) {}
-    }
+    await _firestore.collection('chats').doc(chatId).set({
+      'lastMessage': trimmedMessage,
+      'lastTimestamp': FieldValue.serverTimestamp(),
+      'lastMessageStatus': 'sent',
+      'lastSenderId': currentUserId,
+    }, SetOptions(merge: true));
+
+    try {
+      await _firestore.collection('chats').doc(chatId).update({
+        'unreadCount_$partnerId': FieldValue.increment(1),
+      });
+    } catch (_) {}
   }
 
   Future<void> deleteForMe(String messageId) async {
@@ -204,5 +159,12 @@ class ChatController extends GetxController {
 
   String formatTime(DateTime dateTime) {
     return DateFormat("hh:mm a").format(dateTime);
+  }
+
+  @override
+  void onClose() {
+    _messagesSubscription?.cancel();
+    _chatSubscription?.cancel();
+    super.onClose();
   }
 }

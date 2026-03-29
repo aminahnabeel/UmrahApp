@@ -25,11 +25,13 @@ import 'package:smart_umrah_app/screens/User/auth_pages/forgot_password_screen.d
 import 'package:smart_umrah_app/screens/User/auth_pages/userSignIn.dart';
 import 'package:smart_umrah_app/screens/User/auth_pages/userSignupScreen.dart';
 import 'package:smart_umrah_app/screens/landing_screen.dart';
+import 'package:smart_umrah_app/screens/logo_screen.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/travel_checklist_screen.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/UmrahGuide/umrah_guide_screen.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/umrah_journal_screen.dart';
 
 class AppRoutes {
+  static const String logo = '/logo';
   // User Side Routes
   static const String landingscreen = '/';
   static const String userregister = '/register';
@@ -70,6 +72,7 @@ class AppRoutes {
   // Chat Route
   static const String allChats = '/allchats';
   final getpags = [
+    GetPage(name: logo, page: () => const LogoScreen()),
     // User Side Pages
     GetPage(name: landingscreen, page: () => LandingScreen()),
     GetPage(name: usersignin, page: () => UserSignInScreen()),
