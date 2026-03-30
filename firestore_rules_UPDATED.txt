@@ -48,6 +48,13 @@ service cloud.firestore {
         request.resource.data.isOnline is bool;
     }
 
+    function isAgent() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/TravelAgents/$(request.auth.uid)) ||
+        isAdmin()
+      );
+    }
+
     // ===== USER PROFILE RULES =====
     match /Users/{uid} {
       allow read: if true;
@@ -66,35 +73,39 @@ service cloud.firestore {
     }
 
     // ===== APPROVED USERS SUBCOLLECTION =====
+    // This allows agents to manage their approved users group
     match /agents/{agentId}/approvedUsers/{userId} {
-      // Agent can read their own approved users list
-      // User can read if they are the approved user
-      // Admin can read all
+      // Read permissions:
+      // - Agent can read their own approved users list
+      // - User can check if they are approved by this agent
+      // - Admin can read all
       allow read: if isSignedIn() && (
         isSelf(agentId) ||
         isSelf(userId) ||
         isAdmin()
       );
       
-      // Only the agent can add users to their approved list
+      // Create permissions:
+      // - Only the agent can add users to their approved list
+      // - Must include correct agentId and userId
       allow create: if isSignedIn() && (
         isSelf(agentId) || isAdmin()
       ) && request.resource.data.agentId == agentId &&
         request.resource.data.userId == userId;
       
-      // Agent can update/delete their approved users
+      // Update/Delete permissions:
+      // - Agent can update or remove users from their approved list
       allow update, delete: if isSignedIn() && (
         isSelf(agentId) || isAdmin()
       );
     }
 
-    // ===== APPROVED USERS COLLECTION GROUP (for user queries across all agents) =====
-    match /{path=**}/approvedUsers/{docId} {
-      // Users can query across all agents to find who approved them
-      // Must check resource.data.userId instead of docId for collection group queries
+    // ===== APPROVED USERS COLLECTION GROUP =====
+    // This allows users to query across all agents to find who approved them
+    match /{path=**}/approvedUsers/{userId} {
+      // Users can query the collectionGroup to find all agents who approved them
       allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        isAdmin()
+        isSelf(userId) || isAdmin()
       );
     }
 
@@ -132,14 +143,6 @@ service cloud.firestore {
     match /admin/{docId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
-    }
-
-    // ===== HELPER FUNCTION FOR AGENT CHECK =====
-    function isAgent() {
-      return isSignedIn() && (
-        exists(/databases/$(database)/documents/TravelAgents/$(request.auth.uid)) ||
-        isAdmin()
-      );
     }
 
     // ===== RULES COLLECTION (Agent CRUD, User Read-Only) =====

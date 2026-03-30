@@ -40,7 +40,7 @@ dependencies:
   intl: ^0.20.2               # Date formatting
   youtube_player_flutter: ^9.1.2
   http: ^1.6.0
-  audioplayers: ^6.6.0
+  just_audio: ^0.9.40         # Better web audio support
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
@@ -61,12 +61,20 @@ flutter:
     - assets/emailverify.json
     - assets/loadinginfinity.json
     - assets/en.json
-  
     - assets/ur.json
+    - assets/Thawaaf.json
+    - assets/dua_niyyah.mp3
+    - assets/dua_talbiyah.mp3
+    - assets/dua_entering_masjid.mp3
+    - assets/dua_seeing_kaaba.mp3
+    - assets/dua_black_stone.mp3
+    - assets/dua_between_rukn_yamani_hajr_aswad.mp3
+    - assets/dua_multazam.mp3
+    - assets/dua_maqam_ibrahim.mp3
+    - assets/dua_drinking_zamzam.mp3
     - assets/dua_safa.mp3
     - assets/dua_during_sai.mp3
     - assets/dua_after_umrah.mp3
-    - assets/Thawaaf.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

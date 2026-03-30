@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:smart_umrah_app/Services/firebaseServices/approved_users_service.dart';
 
 class PilgramRequestsScreen extends StatelessWidget {
   const PilgramRequestsScreen({super.key});
@@ -9,6 +10,7 @@ class PilgramRequestsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String agentId = FirebaseAuth.instance.currentUser!.uid;
+    final ApprovedUsersService approvedUsersService = ApprovedUsersService();
 
     return Scaffold(
       appBar: AppBar(
@@ -115,7 +117,12 @@ class PilgramRequestsScreen extends StatelessWidget {
                           children: [
                             ElevatedButton(
                               onPressed: () {
-                                updateStatus(request, "approved");
+                                updateStatus(
+                                  request,
+                                  "approved",
+                                  approvedUsersService,
+                                  agentId,
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
@@ -127,7 +134,12 @@ class PilgramRequestsScreen extends StatelessWidget {
 
                             ElevatedButton(
                               onPressed: () {
-                                updateStatus(request, "rejected");
+                                updateStatus(
+                                  request,
+                                  "rejected",
+                                  approvedUsersService,
+                                  agentId,
+                                );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
@@ -147,19 +159,55 @@ class PilgramRequestsScreen extends StatelessWidget {
     );
   }
 
-  void updateStatus(DocumentSnapshot requestDoc, String newStatus) async {
+  void updateStatus(
+    DocumentSnapshot requestDoc,
+    String newStatus,
+    ApprovedUsersService approvedUsersService,
+    String agentId,
+  ) async {
     final reqRef = FirebaseFirestore.instance
         .collection("Requests")
         .doc(requestDoc.id);
 
-    await reqRef.update({"status": newStatus});
+    try {
+      // Update request status
+      await reqRef.update({"status": newStatus});
 
-    Get.snackbar(
-      "Updated",
-      "Request has been $newStatus",
-      backgroundColor: newStatus == "approved"
-          ? Colors.green
-          : Colors.redAccent,
-    );
+      // If approved, add user to approved users group
+      if (newStatus == "approved") {
+        final pilgrimId = requestDoc["pilgrimId"] ?? requestDoc["userId"];
+        final pilgrimName = requestDoc["pilgrimName"] ?? "Unknown User";
+        final pilgrimEmail = requestDoc["pilgrimEmail"] ?? "No Email";
+
+        if (pilgrimId != null && pilgrimId.isNotEmpty) {
+          await approvedUsersService.addUserToApprovedGroup(
+            agentId: agentId,
+            userId: pilgrimId,
+            userName: pilgrimName,
+            userEmail: pilgrimEmail,
+          );
+        }
+      }
+
+      Get.snackbar(
+        "Success",
+        newStatus == "approved"
+            ? "Request approved! User added to your approved group."
+            : "Request has been $newStatus",
+        backgroundColor: newStatus == "approved"
+            ? Colors.green
+            : Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to update request: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 }

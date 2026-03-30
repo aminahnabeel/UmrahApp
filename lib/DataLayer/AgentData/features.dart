@@ -22,4 +22,18 @@ List<Map<String, dynamic>> get agentFeatures => [
     'description': 'Accept or reject pilgrim requests',
     'route': AppRoutes.agentpilgramrequests,
   },
+
+  {
+    'title': 'Manage Rules',
+    'icon': Icons.rule,
+    'description': 'Add, edit & delete rules',
+    'route': AppRoutes.agentrules,
+  },
+
+  {
+    'title': 'View Groups',
+    'icon': Icons.group,
+    'description': 'See your approved members',
+    'route': AppRoutes.agentviewgroups,
+  },
 ];

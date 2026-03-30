@@ -5,6 +5,8 @@ import 'package:smart_umrah_app/screens/Admin/manage_travel_agent.dart';
 import 'package:smart_umrah_app/screens/Admin/rules&regulation.dart';
 import 'package:smart_umrah_app/screens/Admin/verify_agent_notification_screen.dart';
 import 'package:smart_umrah_app/screens/TravelAgent/AgentChatScreens/ViewAllChatsScreen.dart';
+import 'package:smart_umrah_app/screens/TravelAgent/agent_rules_management_screen.dart';
+import 'package:smart_umrah_app/screens/TravelAgent/agent_view_groups_screen.dart';
 import 'package:smart_umrah_app/screens/TravelAgent/auth_pages/agentSignIn.dart';
 import 'package:smart_umrah_app/screens/TravelAgent/auth_pages/agentSignupScreen.dart';
 import 'package:smart_umrah_app/screens/TravelAgent/GenrateScedule/genrate_scedule.dart';
@@ -21,6 +23,7 @@ import 'package:smart_umrah_app/screens/User/UserFeatures/track_expenses.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/transport_routes.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/ViewPlace/view_places.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/view_travel_agent.dart';
+import 'package:smart_umrah_app/screens/User/UserFeatures/user_view_groups_screen.dart';
 import 'package:smart_umrah_app/screens/User/auth_pages/forgot_password_screen.dart';
 import 'package:smart_umrah_app/screens/User/auth_pages/userSignIn.dart';
 import 'package:smart_umrah_app/screens/User/auth_pages/userSignupScreen.dart';
@@ -61,6 +64,7 @@ class AppRoutes {
   static const String usernotification = '/usersidenotification';
   static const String userofflineaccess = '/userofflineaccess';
   static const String viewtravelagent = '/view_travel_agent';
+  static const String userviewgroups = '/user_view_groups';
 
   // Travel Agent Side Routes
   static const String agentregister = '/agentregister';
@@ -69,6 +73,8 @@ class AppRoutes {
   static const String agentscedule = '/agentscedule';
   static const String agentviewAllchats = '/agentviewAllchats';
   static const String agentpilgramrequests = '/agentpilgramrequests';
+  static const String agentrules = '/agentrules';
+  static const String agentviewgroups = '/agent_view_groups';
   // Chat Route
   static const String allChats = '/allchats';
   final getpags = [
@@ -93,6 +99,7 @@ class AppRoutes {
     GetPage(name: usernotification, page: () => NotificationScreen()),
     GetPage(name: userofflineaccess, page: () => OfflineGuideAccess()),
     GetPage(name: viewtravelagent, page: () => ViewTravelAgent()),
+    GetPage(name: userviewgroups, page: () => UserViewGroupsScreen()),
 
     // Travel Agent Side Pages
     GetPage(name: agentregister, page: () => TravelAgentSignUpScreen()),
@@ -101,6 +108,8 @@ class AppRoutes {
     GetPage(name: agentscedule, page: () => GenerateSchedulePage()),
     GetPage(name: agentviewAllchats, page: () => AgentViewAllChatsScreen()),
     GetPage(name: agentpilgramrequests, page: () => PilgramRequestsScreen()),
+    GetPage(name: agentrules, page: () => AgentRulesManagementScreen()),
+    GetPage(name: agentviewgroups, page: () => AgentViewGroupsScreen()),
 
     // Chat Page
     GetPage(name: allChats, page: () => AllChatsScreen()),

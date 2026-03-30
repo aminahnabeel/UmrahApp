@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:smart_umrah_app/Models/TravelAgentProfileData/travelAgent_profile_model.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/chat_service.dart';
 import 'package:smart_umrah_app/screens/User/chatScreen.dart';
+import 'package:smart_umrah_app/screens/User/UserFeatures/agent_rules_view_screen.dart';
 import 'package:smart_umrah_app/widgets/custom_app_bar.dart';
 
 class ViewTravelAgent extends StatelessWidget {
@@ -58,11 +59,6 @@ class ViewTravelAgent extends StatelessWidget {
 
   // --- View A: All Agents ---
   Widget _allAgentsView(List<QueryDocumentSnapshot> reqDocs, String userId) {
-    final pendingReq = reqDocs.cast<QueryDocumentSnapshot?>().firstWhere(
-      (d) => d?["status"] == "pending",
-      orElse: () => null,
-    );
-
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection("TravelAgents").snapshots(),
       builder: (context, agentSnap) {
@@ -82,6 +78,7 @@ class ViewTravelAgent extends StatelessWidget {
             final agentId = doc.id;
 
             bool requestSent = reqDocs.any((r) => r["agentId"] == agentId);
+            bool hasPendingRequest = reqDocs.any((r) => r["agentId"] == agentId && r["status"] == "pending");
 
             return Card(
               color: Colors.white, // Standard white cards on blue background
@@ -116,11 +113,13 @@ class ViewTravelAgent extends StatelessWidget {
                       agent.agencyName ?? "No Agency",
                       style: const TextStyle(color: Colors.grey),
                     ),
-                    const SizedBox(height: 5),
-                    Row(
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         ElevatedButton(
-                          onPressed: pendingReq != null || requestSent
+                          onPressed: hasPendingRequest || requestSent
                               ? null
                               : () => sendRequest(agentId, agent.name ?? ""),
                           style: ElevatedButton.styleFrom(
@@ -128,7 +127,10 @@ class ViewTravelAgent extends StatelessWidget {
                                 ? Colors.grey
                                 : customBlue,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -136,10 +138,10 @@ class ViewTravelAgent extends StatelessWidget {
                           child: Text(
                             requestSent
                                 ? "Sent"
-                                : (pendingReq != null ? "Wait..." : "Request"),
+                                : (hasPendingRequest ? "Wait..." : "Request"),
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         ElevatedButton.icon(
                           onPressed: () => _startChatWithAgent(
                             userId: userId,
@@ -147,13 +149,44 @@ class ViewTravelAgent extends StatelessWidget {
                             agentName: agent.name ?? "Travel Agent",
                             profileImageUrl: agent.profileImageUrl,
                           ),
-                          icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                          label: const Text("Start Chat"),
+                          icon: const Icon(Icons.chat_bubble_outline, size: 14),
+                          label: const Text(
+                            "Chat",
+                            style: TextStyle(fontSize: 12),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: customBlue,
                             side: const BorderSide(color: customBlue),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => Get.to(
+                            () => AgentRulesViewScreen(
+                              agentId: agentId,
+                              agentName: agent.name ?? "Travel Agent",
+                            ),
+                          ),
+                          icon: const Icon(Icons.rule, size: 14),
+                          label: const Text(
+                            "Rules",
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.green,
+                            side: const BorderSide(color: Colors.green),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -229,29 +262,82 @@ class ViewTravelAgent extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    Stack(
-                      clipBehavior: Clip.none,
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.center,
                       children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () => _startChatWithAgent(
+                                userId: userId,
+                                agentId: agentId,
+                                agentName: agent.name ?? "Travel Agent",
+                                profileImageUrl: agent.profileImageUrl,
+                              ),
+                              icon: const Icon(
+                                Icons.chat_bubble,
+                                color: customBlue,
+                              ),
+                              label: const Text(
+                                "Start Chat",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: customBlue,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 30,
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                right: -5,
+                                top: -5,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    unreadCount > 99
+                                        ? "99+"
+                                        : unreadCount.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                         ElevatedButton.icon(
-                          onPressed: () => _startChatWithAgent(
-                            userId: userId,
-                            agentId: agentId,
-                            agentName: agent.name ?? "Travel Agent",
-                            profileImageUrl: agent.profileImageUrl,
+                          onPressed: () => Get.to(
+                            () => AgentRulesViewScreen(
+                              agentId: agentId,
+                              agentName: agent.name ?? "Travel Agent",
+                            ),
                           ),
-                          icon: const Icon(
-                            Icons.chat_bubble,
-                            color: customBlue,
-                          ),
+                          icon: const Icon(Icons.rule, color: Colors.green),
                           label: const Text(
-                            "Start Chat",
+                            "View Rules",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: customBlue,
+                            foregroundColor: Colors.green,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
+                              horizontal: 30,
                               vertical: 15,
                             ),
                             shape: RoundedRectangleBorder(
@@ -259,28 +345,6 @@ class ViewTravelAgent extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (unreadCount > 0)
-                          Positioned(
-                            right: -5,
-                            top: -5,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                unreadCount > 99
-                                    ? "99+"
-                                    : unreadCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ],

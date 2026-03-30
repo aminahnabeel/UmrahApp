@@ -76,6 +76,13 @@ final List<Map<String, dynamic>> userFeatures = [
   },
 
   {
+    'title': 'My Agent Groups',
+    'description': 'View agents who approved you',
+    'icon': Icons.verified_user,
+    'route': AppRoutes.userviewgroups,
+  },
+
+  {
     'title': 'InappMessaging',
     'description': 'Contact your assigned agent/group',
     'icon': Icons.person_pin,
