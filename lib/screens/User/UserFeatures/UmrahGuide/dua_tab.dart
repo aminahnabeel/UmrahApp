@@ -9,10 +9,11 @@ class DuasTab extends StatefulWidget {
 }
 
 class _DuasTabState extends State<DuasTab> {
-  static const Color cardBackgroundColor = Color(0xFF283645);
-  static const Color textColorPrimary = Colors.white;
-  static const Color textColorSecondary = Colors.white70;
-  static const Color accentColor = Color(0xFF3B82F6);
+  // --- DASHBOARD THEME COLORS ---
+  static const Color primaryBlue = Color(0xFF0D47A1);
+  static const Color cardBackgroundColor = Colors.white;
+  static const Color textColorPrimary = Color(0xFF0D47A1);
+  static const Color textColorSecondary = Colors.black54;
 
   final List<Map<String, String>> duas = const [
     {
@@ -33,23 +34,21 @@ class _DuasTabState extends State<DuasTab> {
       "audio": "dua_talbiyah.mp3",
     },
     {
-      "title": "Dua when entering Masjid al-Haram",
+      "title": "Entering Masjid al-Haram",
       "arabic": "اللّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",
       "transliteration": "Allahumma aftah li abwaba rahmatika.",
       "translation": "O Allah, open for me the doors of Your mercy.",
       "audio": "dua_entering_masjid.mp3",
     },
     {
-      "title": "Dua upon seeing the Kaaba",
+      "title": "Upon seeing the Kaaba",
       "arabic": "اللّهُمَّ زِدْ هَذَا الْبَيْتَ تَشْرِيفًا وَتَعْظِيمًا",
-      "transliteration":
-          "Allahumma zid hadha al-bayta tashreefan wa ta‘theeman.",
-      "translation":
-          "O Allah, increase this House in honor, greatness, and reverence.",
+      "transliteration": "Allahumma zid hadha al-bayta tashreefan wa ta‘theeman.",
+      "translation": "O Allah, increase this House in honor, greatness, and reverence.",
       "audio": "dua_seeing_kaaba.mp3",
     },
     {
-      "title": "Dua at the Black Stone (Hajr al-Aswad)",
+      "title": "At the Black Stone",
       "arabic": "بِسْمِ اللّهِ وَاللّهُ أَكْبَرُ",
       "transliteration": "Bismillahi wallahu akbar.",
       "translation": "In the name of Allah, Allah is the Greatest.",
@@ -67,52 +66,41 @@ class _DuasTabState extends State<DuasTab> {
     },
     {
       "title": "Dua at Multazam (between Hajr al-Aswad and Kaaba door)",
-      "arabic":
-          "اللّهُمَّ يَا مُقَلِّبَ الْقُلُوبِ ثَبِّتْ قَلْبِي عَلَى دِينِكَ",
-      "transliteration":
-          "Allahumma ya muqallibal-quloob thabbit qalbi ‘ala deenik.",
-      "translation":
-          "O Allah, Controller of hearts, make my heart firm upon Your religion.",
+      "arabic": "اللّهُمَّ يَا مُقَلِّبَ الْقُلُوبِ ثَبِّتْ قَلْبِي عَلَى دِينِكَ",
+      "transliteration": "Allahumma ya muqallibal-quloob thabbit qalbi ‘ala deenik.",
+      "translation": "O Allah, Controller of hearts, make my heart firm upon Your religion.",
       "audio": "dua_multazam.mp3",
     },
     {
       "title": "Dua at Maqam Ibrahim",
       "arabic": "وَاتَّخِذُوا مِن مَّقَامِ إِبْرَاهِيمَ مُصَلًّى",
       "transliteration": "Wattakhidhu min Maqami Ibrahima musalla.",
-      "translation":
-          "And take the standing place of Ibrahim as a place of prayer.",
+      "translation": "And take the standing place of Ibrahim as a place of prayer.",
       "audio": "dua_maqam_ibrahim.mp3",
     },
     {
       "title": "Dua while drinking Zamzam",
-      "arabic":
-          "اللّهُمَّ اجْعَلْنِي مِنَ الْمُتَطَهِّرِينَ وَارْزُقْنِي رِزْقًا وَاسِعًا",
-      "transliteration":
-          "Allahumma aj‘alni min al-mutatahhirin warzuqni rizqan wasi‘an.",
-      "translation":
-          "O Allah, make me among those who purify themselves and grant me abundant provision.",
+      "arabic": "اللّهُمَّ اجْعَلْنِي مِنَ الْمُتَطَهِّرِينَ وَارْزُقْنِي رِزْقًا وَاسِعًا",
+      "transliteration": "Allahumma aj‘alni min al-mutatahhirin warzuqni rizqan wasi‘an.",
+      "translation": "O Allah, make me among those who purify themselves and grant me abundant provision.",
       "audio": "dua_drinking_zamzam.mp3",
     },
     {
       "title": "Dua at Safa (beginning Sa’i)",
-      "arabic":
-          "إِنَّ الصَّفَا وَالْمَرْوَةَ مِن شَعَائِرِ اللّهِ... أَبْدَأُ بِمَا بَدَأَ اللّهُ بِهِ",
-      "transliteration":
-          "Inna as-Safa wal-Marwata min sha‘a’irillah… Abda’u bima bada’a Allahu bihi.",
-      "translation":
-          "Indeed, Safa and Marwah are among the symbols of Allah… I begin with what Allah began with.",
+      "arabic": "إِنَّ الصَّفَا وَالْمَرْوَةَ مِن شَعَائِرِ اللّهِ... أَبْدَأُ بِمَا بَدَأَ اللّهُ بِهِ",
+      "transliteration": "Inna as-Safa wal-Marwata min sha‘a’irillah… Abda’u bima bada’a Allahu bihi.",
+      "translation": "Indeed, Safa and Marwah are among the symbols of Allah… I begin with what Allah began with.",
       "audio": "dua_safa.mp3",
     },
     {
-      "title": "Dua during Sa’i (between Safa and Marwah)",
+      "title": "Dua during Sa’i",
       "arabic": "رَبِّ اغْفِرْ وَارْحَمْ إِنَّكَ أَنتَ الأَعَزُّ الأَكْرَمُ",
       "transliteration": "Rabbi ighfir warham innaka anta al-‘azzu al-akram.",
-      "translation":
-          "My Lord, forgive and have mercy, indeed You are the Mighty, the Most Generous.",
+      "translation": "My Lord, forgive and have mercy, indeed You are the Mighty, the Most Generous.",
       "audio": "dua_during_sai.mp3",
     },
     {
-      "title": "Dua after completing Umrah",
+      "title": "Completion of Umrah",
       "arabic": "الْحَمْدُ لِلّهِ عَلَى تَمَامِ الْعُمْرَةِ",
       "transliteration": "Alhamdulillahi ‘ala tamaam al-‘Umrah.",
       "translation": "All praise is for Allah for the completion of ‘Umrah.",
@@ -121,7 +109,6 @@ class _DuasTabState extends State<DuasTab> {
   ];
 
   String searchQuery = "";
-
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
   String? _currentAudio;
@@ -161,25 +148,23 @@ class _DuasTabState extends State<DuasTab> {
         });
       } else {
         await _audioPlayer.stop();
-        
-        // Add 'assets/' prefix for just_audio
+
         final fullPath = 'assets/$audioPath';
         await _audioPlayer.setAsset(fullPath);
         await _audioPlayer.play();
-        
+
         setState(() {
           _isPlaying = true;
           _currentAudio = audioPath;
         });
       }
     } catch (e) {
-      print('Audio playback error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Error playing audio. Try refreshing the page.'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: Duration(seconds: 3),
           ),
         );
       }
@@ -195,38 +180,41 @@ class _DuasTabState extends State<DuasTab> {
     final filteredDuas = duas.where((dua) {
       final query = searchQuery.toLowerCase();
       return dua["title"]!.toLowerCase().contains(query) ||
-          dua["arabic"]!.contains(query) ||
           dua["transliteration"]!.toLowerCase().contains(query);
     }).toList();
 
     return Column(
       children: [
-        // 🔎 Search Bar
         Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: TextField(
-            style: const TextStyle(color: textColorPrimary),
-            decoration: InputDecoration(
-              hintText: "Search Duas...",
-              hintStyle: const TextStyle(color: textColorSecondary),
-              prefixIcon: const Icon(Icons.search, color: accentColor),
-              filled: true,
-              fillColor: cardBackgroundColor,
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            onChanged: (value) {
-              setState(() {
-                searchQuery = value;
-              });
-            },
+            child: TextField(
+              style: const TextStyle(color: Colors.black87),
+              decoration: InputDecoration(
+                hintText: "Search Duas...",
+                hintStyle: const TextStyle(color: Colors.grey),
+                prefixIcon: const Icon(Icons.search_rounded, color: primaryBlue),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (value) => setState(() => searchQuery = value),
+            ),
           ),
         ),
-
-        // 📖 Dua List
         Expanded(
           child: filteredDuas.isEmpty
               ? const Center(
@@ -240,84 +228,123 @@ class _DuasTabState extends State<DuasTab> {
                   itemCount: filteredDuas.length,
                   itemBuilder: (context, index) {
                     final dua = filteredDuas[index];
-                    return Card(
-                      color: cardBackgroundColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      margin: const EdgeInsets.only(bottom: 16.0),
-                      child: ExpansionTile(
-                        tilePadding: const EdgeInsets.all(16.0),
-                        title: Text(
-                          dua["title"]!,
-                          style: const TextStyle(
-                            color: textColorPrimary,
-                            fontWeight: FontWeight.bold,
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: cardBackgroundColor,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
+                        ],
+                      ),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          dividerColor: Colors.transparent,
                         ),
-                        leading: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: ExpansionTile(
+                          tilePadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: primaryBlue.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.menu_book_rounded,
+                              color: primaryBlue,
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(
+                            dua["title"]!,
+                            style: const TextStyle(
+                              color: textColorPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(
+                              _isPlaying && _currentAudio == dua["audio"]
+                                  ? Icons.stop_circle_rounded
+                                  : Icons.play_circle_fill_rounded,
+                              color: primaryBlue,
+                              size: 30,
+                            ),
+                            onPressed: () => _playAudio(dua["audio"]),
+                          ),
                           children: [
-                            Icon(Icons.book, color: accentColor),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(
-                                _isPlaying && _currentAudio == dua["audio"]
-                                    ? Icons.stop
-                                    : Icons.volume_up,
-                                color: accentColor,
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const Divider(
+                                    height: 1,
+                                    color: Color(0xFFEEEEEE),
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Text(
+                                    dua["arabic"]!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryBlue,
+                                      fontFamily: 'Arabic',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 15),
+                                  _buildInfoRow(
+                                    "Transliteration",
+                                    dua["transliteration"]!,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  _buildInfoRow(
+                                    "Translation",
+                                    dua["translation"]!,
+                                  ),
+                                ],
                               ),
-                              tooltip: _isPlaying && _currentAudio == dua["audio"]
-                                  ? 'Stop Audio'
-                                  : 'Play Audio',
-                              onPressed: () => _playAudio(dua["audio"]),
                             ),
                           ],
                         ),
-                        collapsedIconColor: textColorPrimary,
-                        iconColor: accentColor,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 8.0,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  dua["arabic"]!,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColorPrimary,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Transliteration: ${dua["transliteration"]!}",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: textColorSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  "Translation: ${dua["translation"]!}",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: textColorSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                       ),
                     );
                   },
                 ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String content) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            color: primaryBlue,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          content,
+          style: const TextStyle(
+            fontSize: 14,
+            color: textColorSecondary,
+            height: 1.4,
+          ),
         ),
       ],
     );

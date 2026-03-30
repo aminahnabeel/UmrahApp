@@ -46,9 +46,7 @@ class AppRoutes {
   static const String admindashboard = '/admindashboard';
   static const String adminrulesandregulation = '/adminrulesandregulation';
   static const String adminmanagetravelagent = '/adminmanagetravelagent';
-  static const String unverfiedagentnotifications =
-      '/unverfiedagentnotifications';
-
+  static const String unverfiedagentnotifications = '/unverfiedagentnotifications';
   static const String adminmanagepilgram = '/adminmanagepilgram';
 
   // User Features Routes
@@ -77,9 +75,10 @@ class AppRoutes {
   static const String agentviewgroups = '/agent_view_groups';
   // Chat Route
   static const String allChats = '/allchats';
-  final getpags = [
+
+  // Static list for GetMaterialApp
+  static final getpags = [
     GetPage(name: logo, page: () => const LogoScreen()),
-    // User Side Pages
     GetPage(name: landingscreen, page: () => LandingScreen()),
     GetPage(name: usersignin, page: () => UserSignInScreen()),
     GetPage(name: userregister, page: () => UserSignUpScreen()),
@@ -117,14 +116,8 @@ class AppRoutes {
     // Admin Side Pages
     GetPage(name: admindashboard, page: () => AdminDashboardScreen()),
     GetPage(name: adminrulesandregulation, page: () => UpdateRulesScreen()),
-    GetPage(
-      name: adminmanagetravelagent,
-      page: () => AdminManageAgentsScreen(),
-    ),
-    GetPage(
-      name: unverfiedagentnotifications,
-      page: () => AdminNotificationsUnverifiedAgents(),
-    ),
+    GetPage(name: adminmanagetravelagent, page: () => AdminManageAgentsScreen()),
+    GetPage(name: unverfiedagentnotifications, page: () => AdminNotificationsUnverifiedAgents()),
     GetPage(name: adminmanagepilgram, page: () => AdminManagePilgrimsScreen()),
   ];
 }

@@ -8,16 +8,23 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Supabase Initialization
   await Supabase.initialize(
     url: 'https://qnmjmhyxyyhuiyobdebk.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFubWptaHl4eXlodWl5b2JkZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNzU4NjAsImV4cCI6MjA3MDY1MTg2MH0.YTNoraJyuxGOzhGvcratUWBfgK5sSKMQqmxTD_Hw7FE',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFubWptaHl4eXlodWl5b2JkZWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNzU4NjAsImV4cCI6MjA3MDY1MTg2MH0.YTNoraJyuxGOzhGvcratUWBfgK5sSKMQqmxTD_Hw7FE',
   );
+  
   runApp(const SmartUmrahApp());
 }
 
 class SmartUmrahApp extends StatelessWidget {
   const SmartUmrahApp({super.key});
+
+  // Theme Colors from your dashboard
+  static const Color primaryBlue = Color(0xFF0D47A1);
+  static const Color secondaryBlue = Color(0xFF1976D2);
+  static const Color accentColor = Color(0xFF64B5F6);
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +32,55 @@ class SmartUmrahApp extends StatelessWidget {
       title: 'Smart Umrah Application',
       debugShowCheckedModeBanner: false,
       defaultTransition: Transition.fadeIn,
+      
+      // Customized Theme to match your Blue Theme
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0XFF263442)),
+        useMaterial3: true,
+        primaryColor: primaryBlue,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primaryBlue,
+          primary: primaryBlue,
+          secondary: secondaryBlue,
+          surface: Colors.white,
+        ),
+        
+        // Default AppBar Theme
+        appBarTheme: const AppBarTheme(
+          backgroundColor: primaryBlue,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+        ),
+
+        // Default Button Theme
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryBlue,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+
+        // Default Input Decoration (TextFields)
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: primaryBlue, width: 2),
+          ),
+        ),
       ),
+      
       initialRoute: AppRoutes.logo,
-      getPages: AppRoutes().getpags,
+      getPages: AppRoutes.getpags, 
     );
   }
 }
