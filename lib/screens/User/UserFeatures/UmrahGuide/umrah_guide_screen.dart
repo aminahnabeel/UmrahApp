@@ -1,52 +1,59 @@
 // lib/screens/user/umrah_guide_screen.dart
 import 'package:flutter/material.dart';
-import 'package:smart_umrah_app/DataLayer/User/userUmrahGuide/umrah_guide.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/UmrahGuide/dua_tab.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/UmrahGuide/text_guide.dart';
 import 'package:smart_umrah_app/screens/User/UserFeatures/UmrahGuide/vedio_tab.dart';
 
 class UmrahGuideScreen extends StatelessWidget {
-  UmrahGuideScreen({super.key});
+  const UmrahGuideScreen({super.key});
 
-  // Theme colors
-  static const Color primaryBackgroundColor = Color(0xFF1E2A38);
-  static const Color cardBackgroundColor = Color(0xFF283645);
-  static const Color textColorPrimary = Colors.white;
-  static const Color textColorSecondary = Colors.white70;
-  static const Color accentColor = Color(0xFF3B82F6);
+  // --- DASHBOARD THEME COLORS ---
+  static const Color primaryBlue = Color(0xFF0D47A1); 
+  static const Color scaffoldBgColor = Color(0xFFF4F7FA); // Light Greyish-White
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 3, // Text, Videos, Duas
       child: Scaffold(
-        backgroundColor: primaryBackgroundColor,
+        backgroundColor: scaffoldBgColor, // Body background ab light hoga
         appBar: AppBar(
-          backgroundColor: primaryBackgroundColor,
+          backgroundColor: primaryBlue, // Top bar solid blue
           elevation: 0,
+          centerTitle: true,
           title: const Text(
             "Umrah Guide",
             style: TextStyle(
-              color: textColorPrimary,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
+              fontSize: 18,
             ),
           ),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: textColorPrimary),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.of(context).pop(),
           ),
           bottom: const TabBar(
-            indicatorColor: accentColor,
-            labelColor: accentColor,
-            unselectedLabelColor: textColorSecondary,
+            indicatorColor: Colors.white, // Active tab line white hogi
+            indicatorWeight: 3,
+            labelColor: Colors.white, // Selected text white
+            unselectedLabelColor: Colors.white70, // Unselected text thora faint
+            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             tabs: [
-              Tab(icon: Icon(Icons.menu_book), text: "Text"),
-              Tab(icon: Icon(Icons.video_collection), text: "Videos"),
-              Tab(icon: Icon(Icons.favorite), text: "Duas"),
+              Tab(icon: Icon(Icons.menu_book_rounded), text: "Text"),
+              Tab(icon: Icon(Icons.play_circle_fill_rounded), text: "Videos"),
+              Tab(icon: Icon(Icons.favorite_rounded), text: "Duas"),
             ],
           ),
         ),
-        body: TabBarView(children: [TextGuideTab(), VideosTab(), DuasTab()]),
+        // Body automatically TabBarView k mutabiq content change kregi
+        body: const TabBarView(
+          children: [
+            TextGuideTab(), 
+            VideosTab(), 
+            DuasTab(),
+          ],
+        ),
       ),
     );
   }

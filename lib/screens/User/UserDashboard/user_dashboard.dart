@@ -5,13 +5,11 @@ import 'package:smart_umrah_app/Models/UserProfileDataModel/user_profile_datamod
 import 'package:smart_umrah_app/Services/firebaseServices/AuthServices/logout.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/UserProfileData/FetchingProfile/fetch_profile.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/chatbot.dart';
-import 'package:url_launcher/url_launcher.dart'; // ✅ NEW
+import 'package:url_launcher/url_launcher.dart';
 import '../UserFeatures/umrah_journal_screen.dart';
 
 class UserDashboardController extends GetxController {
   var selectedIndex = 0.obs;
-
-  // store the user profile model
   Rxn<UserProfileDatamodel> currentUser = Rxn<UserProfileDatamodel>();
 
   @override
@@ -27,7 +25,6 @@ class UserDashboardController extends GetxController {
   loadUser() async {
     final user = await fetchProfile();
     currentUser.value = user;
-    print("USER DATA LOADED: ${currentUser.value}");
   }
 }
 
@@ -36,20 +33,13 @@ class UserDashboard extends StatelessWidget {
 
   final UserDashboardController controller = Get.put(UserDashboardController());
 
-  static const Color primaryBackgroundColor = Color(0xFF1E2A38);
-  static const Color cardBackgroundColor = Color(0xFF283645);
-  static const Color textColorPrimary = Colors.white;
-  static const Color textColorSecondary = Colors.white70;
-  static const Color accentColor = Color(0xFF3B82F6);
-  static const Color navBarColor = Color(0xFF1E2A38);
-  static const Color navBarSelectedItemColor = accentColor;
-  static const Color navBarUnselectedItemColor = Colors.white54;
+  static const Color primaryBlue = Color(0xFF0D47A1); 
+  static const Color scaffoldBgColor = Color(0xFFF4F7FA); 
+  static const Color cardColor = Colors.white;
 
-  // ✅ NEW FUNCTION (Nusuk Integration)
   void openNusuk(BuildContext context) async {
     final Uri appUri = Uri.parse("nusuk://");
-   final Uri playStoreUri = Uri.parse(
-     "https://play.google.com/store/apps/details?id=com.moh.nusukapp");
+    final Uri playStoreUri = Uri.parse("https://play.google.com/store/apps/details?id=com.moh.nusukapp");
 
     if (await canLaunchUrl(appUri)) {
       await launchUrl(appUri);
@@ -58,20 +48,10 @@ class UserDashboard extends StatelessWidget {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("Nusuk App Required"),
-          content: const Text(
-            "To apply for Umrah or Hajj, please install the official Nusuk app.",
-          ),
+          content: const Text("To apply for Umrah or Hajj, please install the official Nusuk app."),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () async {
-                await launchUrl(playStoreUri);
-              },
-              child: const Text("Install"),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+            TextButton(onPressed: () async => await launchUrl(playStoreUri), child: const Text("Install")),
           ],
         ),
       );
@@ -81,125 +61,125 @@ class UserDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: primaryBackgroundColor,
+      backgroundColor: scaffoldBgColor,
       appBar: AppBar(
-        backgroundColor: primaryBackgroundColor,
+        backgroundColor: primaryBlue,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          "User Dashboard",
-          style: TextStyle(
-            color: textColorPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        centerTitle: true,
+        title: const Text("User Dashboard", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline, color: textColorPrimary),
-            onPressed: () => Get.to(() => ChatbotScreen()),
-            tooltip: 'Chatbot',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: textColorPrimary),
-            onPressed: () async => await logoutUser(),
-            tooltip: 'Logout',
+          IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, size: 22), onPressed: () => Get.to(() => ChatbotScreen())),
+          IconButton(icon: const Icon(Icons.logout_rounded, size: 22), onPressed: () async => await logoutUser()),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Obx(() {
+            return IndexedStack(
+              index: controller.selectedIndex.value,
+              children: [
+                _buildHomeContent(context),
+                _buildJournalContent(context),
+              ],
+            );
+          }),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildFloatingBottomBar(),
           ),
         ],
       ),
-      body: Obx(() {
-        return IndexedStack(
-          index: controller.selectedIndex.value,
-          children: [
-            _buildHomeContent(context),
-            _buildJournalContent(context),
-            _buildSettingsContent(context),
-          ],
-        );
-      }),
-      bottomNavigationBar: Obx(() {
-        return BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Journal'),
-          ],
-          currentIndex: controller.selectedIndex.value,
-          selectedItemColor: navBarSelectedItemColor,
-          unselectedItemColor: navBarUnselectedItemColor,
-          backgroundColor: navBarColor,
-          onTap: controller.changeTab,
-          type: BottomNavigationBarType.fixed,
-        );
-      }),
     );
+  }
+
+  Widget _buildFloatingBottomBar() {
+    return Obx(() => Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Container(
+        height: 65, 
+        decoration: BoxDecoration(
+          color: primaryBlue,
+          borderRadius: BorderRadius.circular(35),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 5)),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(35),
+          child: BottomNavigationBar(
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded, size: 22), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.auto_stories_rounded, size: 22), label: 'Journal'),
+            ],
+            currentIndex: controller.selectedIndex.value,
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white54,
+            backgroundColor: Colors.transparent,
+            onTap: controller.changeTab,
+            type: BottomNavigationBarType.fixed,
+            elevation: 0,
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
+          ),
+        ),
+      ),
+    ));
   }
 
   Widget _buildHomeContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    int crossAxisCount = 2;
-    if (screenWidth > 600) crossAxisCount = 3;
-    if (screenWidth > 900) crossAxisCount = 4;
+    final List<Color> iconColors = [
+      Colors.orange.shade700, Colors.green.shade600, Colors.redAccent.shade400, 
+      Colors.purple.shade600, Colors.teal.shade600, Colors.amber.shade800
+    ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+    // Hataya gaya SingleChildScrollView taake scroll na ho
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Obx(
-            () => Text(
-              "Assalam u Alaikum, ${controller.currentUser.value?.name ?? 'Guest'}",
-              style: TextStyle(
-                fontSize: screenWidth < 400 ? 20 : 26,
-                fontWeight: FontWeight.bold,
-                color: textColorPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Ready for your blessed journey?",
-            style: TextStyle(
-              fontSize: screenWidth < 400 ? 14 : 16,
-              color: textColorSecondary,
-            ),
-          ),
+          Obx(() => Text(
+                "Assalam u Alaikum, ${controller.currentUser.value?.name ?? 'Guest'}",
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryBlue),
+              )),
+          const Text("Ready for your blessed journey?", style: TextStyle(fontSize: 14, color: Colors.black54)),
           const SizedBox(height: 20),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 16.0,
-              mainAxisSpacing: 16.0,
-              childAspectRatio: screenWidth < 600 ? 0.9 : 1.1,
-            ),
-            itemCount: userFeatures.length + 1, // ✅ UPDATED
-            itemBuilder: (context, index) {
-              // ✅ FIRST CARD = NUSUK
-              if (index == 0) {
+          
+          // Expanded use kiya taake Grid screen ke baaki hisse mein fit ho jaye
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.only(bottom: 100), // Bottom bar ke liye space
+              // Agar cards kam hain aur scroll band karna hai toh physics: NeverScrollableScrollPhysics()
+              physics: const BouncingScrollPhysics(), 
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: screenWidth > 600 ? 3 : 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.0, 
+              ),
+              itemCount: userFeatures.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _buildDashboardCard(
+                    icon: Icons.travel_explore_rounded,
+                    iconColor: Colors.blue.shade800, 
+                    title: "Nusuk App",
+                    description: "Apply for Umrah",
+                    onTap: () => openNusuk(context),
+                  );
+                }
+                final feature = userFeatures[index - 1];
                 return _buildDashboardCard(
-                  context,
-                  icon: Icons.travel_explore,
-                  title: "Apply for Umrah / Hajj",
-                  description: "Open Nusuk (Official App)",
-                  onTap: () {
-                    openNusuk(context);
-                  },
-                  screenWidth: screenWidth,
+                  icon: feature['icon'],
+                  iconColor: iconColors[(index - 1) % iconColors.length], 
+                  title: feature['title'],
+                  description: feature['description'],
+                  onTap: () => Get.toNamed(feature['route']),
                 );
-              }
-             final feature = userFeatures[index - 1];
-            
-              return _buildDashboardCard(
-                context,
-                icon: feature['icon'],
-                title: feature['title'],
-                description: feature['description'],
-                onTap: () {
-                  Get.toNamed(feature['route']);
-                },
-                screenWidth: screenWidth,
-              );
-            },
+              },
+            ),
           ),
         ],
       ),
@@ -207,166 +187,47 @@ class UserDashboard extends StatelessWidget {
   }
 
   Widget _buildJournalContent(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 500),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.book,
-                size: screenWidth < 400 ? 60 : 80,
-                color: accentColor,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Umrah Journal",
-                style: TextStyle(
-                  fontSize: screenWidth < 400 ? 20 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: textColorPrimary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Document your spiritual journey here.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: screenWidth < 400 ? 14 : 16,
-                  color: textColorSecondary,
-                ),
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  Get.to(() => UmrahJournalScreen());
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor,
-                  foregroundColor: textColorPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 15,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text("New Entry"),
-              ),
-            ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.auto_stories_rounded, size: 80, color: primaryBlue.withOpacity(0.1)),
+          const Text("Umrah Journal", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryBlue)),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () => Get.to(() => UmrahJournalScreen()),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text("New Entry"),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildSettingsContent(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 500),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.settings,
-                size: screenWidth < 400 ? 60 : 80,
-                color: accentColor,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Settings",
-                style: TextStyle(
-                  fontSize: screenWidth < 400 ? 20 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: textColorPrimary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Manage your preferences and app configurations.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: screenWidth < 400 ? 14 : 16,
-                  color: textColorSecondary,
-                ),
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Opening detailed settings!")),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor,
-                  foregroundColor: textColorPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 15,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text("Go to Settings"),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String description,
-    required VoidCallback onTap,
-    required double screenWidth,
-  }) {
-    return GestureDetector(
+  Widget _buildDashboardCard({required IconData icon, required Color iconColor, required String title, required String description, required VoidCallback onTap}) {
+    return InkWell(
       onTap: onTap,
-      child: Card(
-        color: cardBackgroundColor,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        child: Padding(
-          padding: const EdgeInsets.all(1.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: screenWidth < 400 ? 40 : 50, color: accentColor),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: textColorPrimary,
-                  fontSize: screenWidth < 400 ? 16 : 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: textColorSecondary,
-                  fontSize: screenWidth < 400 ? 12 : 13,
-                ),
-              ),
-            ],
-          ),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4))],
+        ),
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: iconColor.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(icon, size: 24, color: iconColor),
+            ),
+            const SizedBox(height: 10),
+            Text(title, textAlign: TextAlign.center, maxLines: 1, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(description, textAlign: TextAlign.center, maxLines: 1, style: const TextStyle(color: Colors.black45, fontSize: 10)),
+          ],
         ),
       ),
     );
