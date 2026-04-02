@@ -52,11 +52,10 @@ class AgentSigninController extends GetxController {
         return false;
       }
 
-      // 3) If email not verified in Firebase, send verification email but allow login
+      // 3) If email not verified in Firebase, allow login and let the
+      // verification screen handle any resend request manually.
       if (!user.emailVerified) {
-        await user.sendEmailVerification();
-        debugPrint('Verification email sent to: ${user.email}');
-        // Allow login even if email not verified yet
+        debugPrint('User is not verified yet: ${user.email}');
       }
 
       // 4) Save session locally

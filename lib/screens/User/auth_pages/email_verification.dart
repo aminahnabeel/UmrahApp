@@ -19,8 +19,9 @@ class EmailVerificationScreen extends StatefulWidget {
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   late Timer _verificationCheckTimer;
-  late Timer _resendCooldownTimer;
+  Timer? _resendCooldownTimer;
   int _remainingTime = 60;
+  int _cooldownDuration = 60;
   bool _canResend = false;
   bool _isVerifying = false;
 
@@ -32,7 +33,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    sendVerificationEmail();
     startResendCooldown();
     startPeriodicVerificationCheck();
   }
@@ -45,10 +45,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     });
   }
 
-  void startResendCooldown() {
+  void startResendCooldown({int seconds = 60}) {
+    if (_resendCooldownTimer?.isActive ?? false) {
+      _resendCooldownTimer?.cancel();
+    }
+
     setState(() {
       _canResend = false;
-      _remainingTime = 60;
+      _remainingTime = seconds;
+      _cooldownDuration = seconds;
     });
 
     _resendCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -60,17 +65,24 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         setState(() {
           _canResend = true;
         });
-        _resendCooldownTimer.cancel();
+        _resendCooldownTimer?.cancel();
       }
     });
   }
 
-  Future<void> sendVerificationEmail() async {
+  Future<bool> sendVerificationEmail() async {
     setState(() {
       _isVerifying = true;
     });
     try {
       final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'No logged-in user found. Please sign in again.',
+        );
+      }
+
       await user?.sendEmailVerification();
       if (mounted) {
         Get.snackbar(
@@ -81,11 +93,34 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
           colorText: Colors.white,
         );
       }
+      return true;
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String message;
+
+        if (e.code == 'too-many-requests') {
+          startResendCooldown(seconds: 300);
+          message =
+              'Too many attempts. Please wait a few minutes before requesting another email.';
+        } else if (e.code == 'user-not-found') {
+          message = 'Session expired. Please sign in again.';
+        } else {
+          message = e.message ?? 'Failed to send verification email.';
+        }
+
+        Get.snackbar(
+          'Error',
+          message,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
       if (mounted) {
         Get.snackbar(
           'Error',
-          'Failed to send email: $e',
+          'Something went wrong while sending the verification email.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,
@@ -98,20 +133,23 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         });
       }
     }
+    return false;
   }
 
   Future<void> checkEmailVerification() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await user?.reload();
+      if (user == null) return;
 
-      if (user?.emailVerified ?? false) {
+      await user.reload();
+
+      if (user.emailVerified) {
         _verificationCheckTimer.cancel();
-        _resendCooldownTimer.cancel();
+        _resendCooldownTimer?.cancel();
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isEmailVerified', true);
-        await prefs.setString('userEmail', user?.email ?? '');
+        await prefs.setString('userEmail', user.email ?? '');
 
         if (mounted) {
           Get.offAllNamed(AppRoutes.usersignin);
@@ -125,7 +163,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   @override
   void dispose() {
     _verificationCheckTimer.cancel();
-    _resendCooldownTimer.cancel();
+    _resendCooldownTimer?.cancel();
     super.dispose();
   }
 
@@ -190,7 +228,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   CircularPercentIndicator(
                     radius: 60.0,
                     lineWidth: 8.0,
-                    percent: _remainingTime / 60,
+                    percent: (_remainingTime / _cooldownDuration).clamp(0.0, 1.0),
                     center: Text(
                       '$_remainingTime',
                       style: const TextStyle(
@@ -214,9 +252,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     height: 55,
                     child: ElevatedButton(
                       onPressed: (_canResend && !_isVerifying)
-                          ? () {
-                              sendVerificationEmail();
-                              startResendCooldown();
+                          ? () async {
+                              final sent = await sendVerificationEmail();
+                              if (sent) {
+                                startResendCooldown();
+                              }
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -248,7 +288,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   TextButton(
                     onPressed: () {
                       _verificationCheckTimer.cancel();
-                      _resendCooldownTimer.cancel();
+                      _resendCooldownTimer?.cancel();
                       Get.offAllNamed(AppRoutes.usersignin);
                     },
                     child: const Text(

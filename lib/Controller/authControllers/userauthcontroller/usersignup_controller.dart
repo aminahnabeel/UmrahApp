@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:smart_umrah_app/screens/User/auth_pages/email_verification.dart';
 
 class SignupController extends GetxController {
   final RxBool _isLoading = false.obs;
@@ -39,14 +38,6 @@ class SignupController extends GetxController {
         await user.sendEmailVerification();
         debugPrint("Verification email sent to: ${user.email}");
       }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              EmailVerificationScreen(emailAddress: user?.email ?? email),
-        ),
-      );
     } on FirebaseAuthException catch (e) {
       debugPrint("Firebase Auth Error: ${e.code} - ${e.message}");
       _showErrorSnackBar(context, _getErrorMessage(e));
