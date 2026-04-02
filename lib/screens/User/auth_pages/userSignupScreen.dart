@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:smart_umrah_app/Controller/authControllers/userauthcontroller/usersignup_controller.dart';
@@ -9,6 +10,7 @@ import 'package:smart_umrah_app/screens/User/auth_pages/email_verification.dart'
 import 'package:smart_umrah_app/validation/auth_validation.dart';
 import 'package:smart_umrah_app/widgets/customButton.dart';
 import 'package:smart_umrah_app/DataLayer/User/UserData/userSignup_data.dart';
+import 'package:smart_umrah_app/widgets/image_upload_widget.dart';
 
 class UserSignUpScreen extends StatelessWidget {
   UserSignUpScreen({super.key});
@@ -26,6 +28,7 @@ class UserSignUpScreen extends StatelessWidget {
   final RxBool _obscureText1 = true.obs;
   final RxString selectedGender = ''.obs;
   final RxBool _isLoading = false.obs;
+  final RxString _profileImageUrl = ''.obs;
 
   final SignupController signupController = Get.put(SignupController());
 
@@ -45,15 +48,11 @@ class UserSignUpScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo/Icon Area
-                  Container(
-                    height: 100,
-                    width: 100,
-                    decoration: const BoxDecoration(
-                      color: Colors.white24,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.person_add, color: Colors.white, size: 50),
+                  // Profile Image Upload Widget
+                  ImageUploadWidget(
+                    onImageUploaded: (imageUrl) {
+                      _profileImageUrl.value = imageUrl;
+                    },
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -209,6 +208,12 @@ class UserSignUpScreen extends StatelessWidget {
   Future<void> _handleSignUp(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       _isLoading.value = true;
+      
+      if (kDebugMode) {
+        print('🔍 DEBUG: Profile Image URL: "${_profileImageUrl.value}"');
+        print('🔍 DEBUG: Is empty: ${_profileImageUrl.value.isEmpty}');
+      }
+      
       try {
         await signupController.signUpUser(
           context,
@@ -227,7 +232,12 @@ class UserSignUpScreen extends StatelessWidget {
           permanentAddress: _addressController.text.trim(),
           gender: selectedGender.value,
           dateOfBirth: _dateController.text.trim(),
+          profileImageUrl: _profileImageUrl.value.trim(),
         );
+        
+        if (kDebugMode) {
+          print('🔍 DEBUG: Saving profile with imageUrl: "${userProfile.profileImageUrl}"');
+        }
 
         await NewProfileDataCollection().saveUserProfileData(userProfile);
         Get.to(() => EmailVerificationScreen(emailAddress: _emailController.text.trim()));

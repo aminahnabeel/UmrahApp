@@ -1,24 +1,22 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'; // kIsWeb check ke liye
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:smart_umrah_app/Services/SupabaseServices/supabaseStorage/umrahJournalsImg.dart';
+import 'package:smart_umrah_app/Services/imgbb_service.dart';
 
 class UmrahJournalController extends GetxController {
-  // Theme colors from your UI
   static const Color primaryBackgroundColor = Color(0xFF0D47A1);
   static const Color accentColor = Color(0xFF1976D2);
 
-  final SupabaseJournalImgService _supabaseService = SupabaseJournalImgService();
+  final ImgBBService _imgbbService = ImgBBService();
 
   RxList<QueryDocumentSnapshot<Map<String, dynamic>>> journals =
       <QueryDocumentSnapshot<Map<String, dynamic>>>[].obs;
   RxBool isLoading = false.obs;
   
-  // FIX: XFile use karein taake Web par error na aaye
   Rx<XFile?> imageFile = Rx<XFile?>(null);
 
   CollectionReference<Map<String, dynamic>>? journalCollection;
@@ -47,22 +45,80 @@ class UmrahJournalController extends GetxController {
 
   Future<void> pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
     if (pickedFile != null) {
-      imageFile.value = pickedFile; // Android aur Web dono ke liye fit hai
+      imageFile.value = pickedFile;
     }
+  }
+
+  Future<void> pickImageFromCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
+    if (pickedFile != null) {
+      imageFile.value = pickedFile;
+    }
+  }
+
+  Future<void> showImageSourceDialog() async {
+    await Get.dialog(
+      AlertDialog(
+        title: const Text('Select Image Source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF0D47A1)),
+              title: const Text('Camera'),
+              onTap: () {
+                Get.back();
+                pickImageFromCamera();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Color(0xFF0D47A1)),
+              title: const Text('Gallery'),
+              onTap: () {
+                Get.back();
+                pickImage();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<String?> uploadImage() async {
     if (imageFile.value == null) return null;
     try {
-      // Supabase upload ke liye hum path bhejenge (Android ke liye)
-      // Note: Agar web par upload nahi ho raha toh aapko service file mein check lagana hoga
-      final url = await _supabaseService.uploadJournalImageToSupabase(
-        File(imageFile.value!.path), 
-      );
+      // Upload XFile directly - works on both web and mobile
+      final url = await _imgbbService.uploadImage(imageFile.value!);
       return url;
+    } on ImgBBUploadException catch (e) {
+      Get.snackbar(
+        'Upload Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return null;
     } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to upload image: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return null;
     }
   }
@@ -73,6 +129,11 @@ class UmrahJournalController extends GetxController {
     required String content,
     String? oldImageUrl,
   }) async {
+    if (title.isEmpty || content.isEmpty) {
+      Get.snackbar('Error', 'Title and content are required');
+      return;
+    }
+
     isLoading.value = true;
     try {
       final uploadedUrl = await uploadImage() ?? oldImageUrl;
@@ -85,14 +146,29 @@ class UmrahJournalController extends GetxController {
 
       if (docId == null) {
         await journalCollection?.add(data);
-        Get.snackbar('Success', 'Journal added successfully'); //
+        Get.snackbar(
+          'Success',
+          'Journal added successfully',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
       } else {
         await journalCollection?.doc(docId).update(data);
-        Get.snackbar('Updated', 'Journal updated successfully'); //
+        Get.snackbar(
+          'Updated',
+          'Journal updated successfully',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
       }
       imageFile.value = null;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to save: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to save: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }

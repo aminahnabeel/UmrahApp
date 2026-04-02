@@ -69,7 +69,7 @@ class NewProfileDataCollection {
       }
 
       final docRef = database
-          .collection("Profiles")
+          .collection("Users")
           .withConverter<UserProfileDatamodel>(
             fromFirestore: (snap, _) =>
                 UserProfileDatamodel.fromFirebase(snap.data()!),

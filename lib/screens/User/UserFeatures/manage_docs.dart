@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:smart_umrah_app/Controller/userControllers/DocumentController/docs_controller.dart';
-import 'package:smart_umrah_app/widgets/custom_app_bar.dart'; 
+import 'package:smart_umrah_app/widgets/custom_app_bar.dart';
+import 'dart:typed_data';
 
 class ManageDocScreen extends StatelessWidget {
   ManageDocScreen({super.key});
@@ -43,25 +44,71 @@ class ManageDocScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Obx(() {
+              // Show selected image
               if (controller.imageFile.value != null) {
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: kIsWeb 
-                    ? Image.network(controller.imageFile.value!.path, height: 100, width: 100, fit: BoxFit.cover)
-                    : Image.file(File(controller.imageFile.value!.path), height: 100, width: 100, fit: BoxFit.cover),
-                );
-              } else if (docData != null && docData['photoUrl'] != null) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(docData['photoUrl'], height: 100, width: 100, fit: BoxFit.cover),
+                  child: kIsWeb
+                      ? FutureBuilder<Uint8List>(
+                          future: controller.imageFile.value!.readAsBytes(),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Image.memory(
+                                snapshot.data!,
+                                height: 100,
+                                width: 100,
+                                fit: BoxFit.cover,
+                              );
+                            }
+                            return const SizedBox(
+                              height: 100,
+                              width: 100,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          },
+                        )
+                      : Image.file(
+                          File(controller.imageFile.value!.path),
+                          height: 100,
+                          width: 100,
+                          fit: BoxFit.cover,
+                        ),
                 );
               }
+              // Show existing image from URL
+              else if (docData != null && docData['photoUrl'] != null) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    docData['photoUrl'],
+                    height: 100,
+                    width: 100,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: Icon(Icons.error),
+                      );
+                    },
+                  ),
+                );
+              }
+              // No image
               return const Text("No image selected", style: TextStyle(fontSize: 12));
             }),
             const SizedBox(height: 10),
             ElevatedButton.icon(
-              onPressed: () => controller.pickImage(),
-              icon: const Icon(Icons.photo_library, color: Colors.white),
+              onPressed: () => controller.showImageSourceDialog(),
+              icon: const Icon(Icons.add_photo_alternate, color: Colors.white),
               label: const Text('Pick Image', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(backgroundColor: customIconBlue),
             ),

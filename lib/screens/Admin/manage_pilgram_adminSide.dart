@@ -44,14 +44,17 @@ class AdminManagePilgrimsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ListTile(
-                  // leading: CircleAvatar(
-                  //   radius: 28,
-                  //   backgroundImage: pilgrim.profileImageUrl != null &&
-                  //           pilgrim.profileImageUrl!.isNotEmpty
-                  //       ? NetworkImage(pilgrim.profileImageUrl!)
-                  //       : const AssetImage("assets/profile_placeholder.png")
-                  //           as ImageProvider,
-                  // ),
+                  leading: CircleAvatar(
+                    radius: 28,
+                    backgroundImage: pilgrim.profileImageUrl != null &&
+                            pilgrim.profileImageUrl!.isNotEmpty
+                        ? NetworkImage(pilgrim.profileImageUrl!)
+                        : null,
+                    child: (pilgrim.profileImageUrl == null ||
+                            pilgrim.profileImageUrl!.isEmpty)
+                        ? const Icon(Icons.person, size: 28)
+                        : null,
+                  ),
                   title: Text(
                     pilgrim.name ?? "Unknown User",
                     style: const TextStyle(

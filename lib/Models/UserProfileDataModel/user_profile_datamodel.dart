@@ -8,6 +8,7 @@ class UserProfileDatamodel {
   final String? dateOfBirth;
   final String? passportNumber;
   final double? expenses;
+  final String profileImageUrl;
   final bool isUser;
 
   UserProfileDatamodel({
@@ -20,6 +21,7 @@ class UserProfileDatamodel {
     this.dateOfBirth,
     this.passportNumber,
     this.expenses,
+    this.profileImageUrl = '',
     this.isUser = true,
   });
 
@@ -34,6 +36,7 @@ class UserProfileDatamodel {
       'dateOfBirth': dateOfBirth,
       'passportNumber': passportNumber,
       'expenses': expenses,
+      'profileImageUrl': profileImageUrl,
       'isUser': isUser,
     };
   }
@@ -52,6 +55,7 @@ class UserProfileDatamodel {
       expenses: (data['expenses'] != null)
           ? double.tryParse(data['expenses'].toString())
           : null,
+      profileImageUrl: data['profileImageUrl'] ?? '',
       isUser: data['isUser'] ?? true,
     );
   }

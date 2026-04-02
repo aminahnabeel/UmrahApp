@@ -9,6 +9,7 @@ import 'package:smart_umrah_app/screens/TravelAgent/auth_pages/agent_email_verif
 import 'package:smart_umrah_app/validation/auth_validation.dart';
 import 'package:smart_umrah_app/widgets/customButton.dart';
 import 'package:smart_umrah_app/widgets/customtextfield.dart';
+import 'package:smart_umrah_app/widgets/image_upload_widget.dart';
 
 class TravelAgentSignUpScreen extends StatelessWidget {
   TravelAgentSignUpScreen({super.key});
@@ -35,6 +36,7 @@ class TravelAgentSignUpScreen extends StatelessWidget {
   final RxBool _obscureConfirmPassword = true.obs;
   final RxString selectedGender = ''.obs;
   final RxBool _isLoading = false.obs;
+  final RxString _profileImageUrl = ''.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +68,14 @@ class TravelAgentSignUpScreen extends StatelessWidget {
                     width: 120,
                   ),
                   const SizedBox(height: 20),
+
+                  // Profile Image Upload
+                  ImageUploadWidget(
+                    onImageUploaded: (imageUrl) {
+                      _profileImageUrl.value = imageUrl;
+                    },
+                  ),
+                  const SizedBox(height: 24),
 
                   // Agent Name
                   customTextField(
@@ -224,6 +234,7 @@ class TravelAgentSignUpScreen extends StatelessWidget {
                               gender: selectedGender.value,
                               dateOfBirth: _dateController.text.trim(),
                               agencyName: _agencyNameController.text.trim(),
+                              profileImageUrl: _profileImageUrl.value,
                             );
 
                             await AgentProfileDataCollection()

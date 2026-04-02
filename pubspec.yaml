@@ -32,7 +32,6 @@ dependencies:
 
   # Storage & State Management
   shared_preferences: ^2.5.3
-  supabase_flutter: ^2.10.1   # External image storage
   get: ^4.7.2                 # State management
 
   # Media & Formatting
@@ -42,6 +41,7 @@ dependencies:
   http: ^1.6.0
   just_audio: ^0.9.40         # Better web audio support
   audioplayers: ^6.6.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

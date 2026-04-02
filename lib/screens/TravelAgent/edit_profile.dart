@@ -1,17 +1,17 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:smart_umrah_app/Controller/userControllers/ImagePickerController/image_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smart_umrah_app/Models/TravelAgentProfileData/travelAgent_profile_model.dart';
-import 'package:smart_umrah_app/Models/UserProfileDataModel/user_profile_datamodel.dart';
-import 'package:smart_umrah_app/Services/SupabaseServices/supabaseStorage/agentProfileImage.dart';
+import 'package:smart_umrah_app/Services/imgbb_service.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/AgentData/agent_data.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/AgentData/fetch_profile.dart';
-import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/UserProfileData/FetchingProfile/fetch_profile.dart';
-import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/UserProfileData/newUser_profile_data_collection.dart';
 import 'package:smart_umrah_app/routes/routes.dart';
 import 'package:smart_umrah_app/widgets/customButton.dart';
 import 'package:smart_umrah_app/widgets/customtextfield.dart';
+import 'dart:typed_data';
 
 class EditAgentProfileScreen extends StatelessWidget {
   final TravelAgentProfileModel userProfile;
@@ -19,9 +19,8 @@ class EditAgentProfileScreen extends StatelessWidget {
   EditAgentProfileScreen({super.key, required this.userProfile});
 
   final _formKey = GlobalKey<FormState>();
-  final ImagePickerController _imagePickerController = Get.put(
-    ImagePickerController(),
-  );
+  final Rx<XFile?> _selectedImage = Rx<XFile?>(null);
+  final ImgBBService _imgbbService = ImgBBService();
 
   // Controllers
   late final TextEditingController _nameController = TextEditingController(
@@ -54,26 +53,73 @@ class EditAgentProfileScreen extends StatelessWidget {
               children: [
                 // Profile Image
                 GestureDetector(
-                  onTap: () => _imagePickerController.pickImageFromGallery(),
+                  onTap: () async {
+                    final picker = ImagePicker();
+                    final result = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 1920,
+                      maxHeight: 1920,
+                      imageQuality: 85,
+                    );
+                    if (result != null) {
+                      _selectedImage.value = result;
+                      if (kDebugMode) {
+                        print('✅ Profile image selected: ${result.name}');
+                      }
+                    }
+                  },
                   child: Obx(
-                    () => CircleAvatar(
-                      radius: 50,
-                      backgroundImage:
-                          _imagePickerController.selectedImage.value != null
-                          ? FileImage(
-                              _imagePickerController.selectedImage.value!,
-                            )
-                          : (userProfile.profileImageUrl != null
-                                    ? NetworkImage(userProfile.profileImageUrl!)
-                                    : null)
-                                as ImageProvider?,
-                      child:
-                          _imagePickerController.selectedImage.value == null &&
-                              userProfile.profileImageUrl == null
-                          ? const Icon(Icons.person, size: 50)
-                          : null,
-                    ),
+                    () {
+                      // Show newly selected image
+                      if (_selectedImage.value != null) {
+                        if (kIsWeb) {
+                          return FutureBuilder<Uint8List>(
+                            future: _selectedImage.value!.readAsBytes(),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return CircleAvatar(
+                                  radius: 50,
+                                  backgroundImage: MemoryImage(snapshot.data!),
+                                );
+                              }
+                              return const CircleAvatar(
+                                radius: 50,
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                          );
+                        } else {
+                          return CircleAvatar(
+                            radius: 50,
+                            backgroundImage: FileImage(
+                              File(_selectedImage.value!.path),
+                            ),
+                          );
+                        }
+                      }
+                      
+                      // Show existing profile image
+                      if (userProfile.profileImageUrl != null &&
+                          userProfile.profileImageUrl!.isNotEmpty) {
+                        return CircleAvatar(
+                          radius: 50,
+                          backgroundImage: NetworkImage(
+                            userProfile.profileImageUrl!,
+                          ),
+                        );
+                      }
+                      
+                      // Show placeholder
+                      return const CircleAvatar(
+                        radius: 50,
+                        child: Icon(Icons.person, size: 50),
+                      );
+                    },
                   ),
+                ),
+                const Text(
+                  "Tap to change profile picture",
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 const SizedBox(height: 20),
 
@@ -120,12 +166,42 @@ class EditAgentProfileScreen extends StatelessWidget {
                         isLoading.value = true;
 
                         String? uploadedImageUrl;
-                        if (_imagePickerController.selectedImage.value !=
-                            null) {
-                          uploadedImageUrl = await SupabaseService()
-                              .uploadImageToSupabase(
-                                _imagePickerController.selectedImage.value!,
-                              );
+                        if (_selectedImage.value != null) {
+                          try {
+                            if (kDebugMode) {
+                              print('📤 Uploading profile image to ImgBB...');
+                            }
+                            uploadedImageUrl = await _imgbbService.uploadImage(
+                              _selectedImage.value!,
+                            );
+                            if (kDebugMode) {
+                              print('✅ Profile image uploaded: $uploadedImageUrl');
+                            }
+                          } on ImgBBUploadException catch (e) {
+                            if (kDebugMode) {
+                              print('❌ Upload failed: $e');
+                            }
+                            Get.snackbar(
+                              'Upload Error',
+                              e.toString(),
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                            );
+                            isLoading.value = false;
+                            return;
+                          } catch (e) {
+                            if (kDebugMode) {
+                              print('❌ Unexpected error: $e');
+                            }
+                            Get.snackbar(
+                              'Error',
+                              'Failed to upload image: ${e.toString()}',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                            );
+                            isLoading.value = false;
+                            return;
+                          }
                         }
 
                         final uid = FirebaseAuth.instance.currentUser?.uid;

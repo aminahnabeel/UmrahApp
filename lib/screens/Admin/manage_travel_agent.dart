@@ -55,8 +55,11 @@ class AdminManageAgentsScreen extends StatelessWidget {
                         agent.profileImageUrl != null &&
                             agent.profileImageUrl!.isNotEmpty
                         ? NetworkImage(agent.profileImageUrl!)
-                        : const AssetImage("assets/profile_placeholder.png")
-                              as ImageProvider,
+                        : null,
+                    child: (agent.profileImageUrl == null ||
+                            agent.profileImageUrl!.isEmpty)
+                        ? const Icon(Icons.person, size: 26)
+                        : null,
                   ),
 
                   title: Text(

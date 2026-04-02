@@ -73,9 +73,9 @@ class UmrahJournalScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: () => controller.pickImage(),
-              icon: const Icon(Icons.photo_library, color: Colors.white, size: 20),
-              label: const Text('Pick Image', style: TextStyle(color: Colors.white)),
+              onPressed: () => controller.showImageSourceDialog(),
+              icon: const Icon(Icons.add_photo_alternate, color: Colors.white, size: 20),
+              label: const Text('Add Image', style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: customIconBlue,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
