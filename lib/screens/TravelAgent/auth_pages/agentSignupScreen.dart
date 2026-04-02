@@ -61,13 +61,7 @@ class TravelAgentSignUpScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const SizedBox(height: 30),
-                  Image.asset(
-                    'assets/umrah_app_logo.png',
-                    height: 120,
-                    width: 120,
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
 
                   // Profile Image Upload
                   ImageUploadWidget(

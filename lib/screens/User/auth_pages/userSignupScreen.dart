@@ -48,13 +48,7 @@ class UserSignUpScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Profile Image Upload Widget
-                  ImageUploadWidget(
-                    onImageUploaded: (imageUrl) {
-                      _profileImageUrl.value = imageUrl;
-                    },
-                  ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   const Text(
                     "Create Account",
                     style: TextStyle(
@@ -62,6 +56,13 @@ class UserSignUpScreen extends StatelessWidget {
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Profile Image Upload Widget
+                  ImageUploadWidget(
+                    onImageUploaded: (imageUrl) {
+                      _profileImageUrl.value = imageUrl;
+                    },
                   ),
                   const SizedBox(height: 30),
 
