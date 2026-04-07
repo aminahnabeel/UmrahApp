@@ -77,8 +77,19 @@ class ViewTravelAgent extends StatelessWidget {
             final agent = TravelAgentProfileModel.fromFirebase(data);
             final agentId = doc.id;
 
-            bool requestSent = reqDocs.any((r) => r["agentId"] == agentId);
-            bool hasPendingRequest = reqDocs.any((r) => r["agentId"] == agentId && r["status"] == "pending");
+            final agentRequests = reqDocs.where((r) => r["agentId"] == agentId);
+            final hasPendingRequest = agentRequests.any(
+              (r) => (r["status"] ?? "").toString().toLowerCase() == "pending",
+            );
+            final hasApprovedRequest = agentRequests.any(
+              (r) {
+                final status = (r["status"] ?? "").toString().toLowerCase();
+                return status == "approved" || status == "accepted";
+              },
+            );
+
+            // Treat declined/rejected as re-requestable; only pending/approved lock the button.
+            final requestSent = hasPendingRequest || hasApprovedRequest;
 
             return Card(
               color: Colors.white, // Standard white cards on blue background
@@ -138,7 +149,7 @@ class ViewTravelAgent extends StatelessWidget {
                           child: Text(
                             requestSent
                                 ? "Sent"
-                                : (hasPendingRequest ? "Wait..." : "Request"),
+                                : "Request",
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),
@@ -359,11 +370,33 @@ class ViewTravelAgent extends StatelessWidget {
 
   Future<void> sendRequest(String agentId, String agentName) async {
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userDoc = await FirebaseFirestore.instance
+      .collection("Users")
+      .doc(user.uid)
+      .get();
+    final userData = userDoc.data() ?? <String, dynamic>{};
+
+    final String fullNameFromProfile =
+      (userData["name"] ?? userData["fullName"] ?? "").toString().trim();
+    final String displayName = (user.displayName ?? "").trim();
+    final String email = user.email ?? "";
+    final String fallbackName = email.contains("@")
+        ? email.split("@").first
+        : "Pilgrim";
+    final String pilgrimName = fullNameFromProfile.isNotEmpty
+      ? fullNameFromProfile
+      : (displayName.isNotEmpty ? displayName : fallbackName);
+
     await FirebaseFirestore.instance.collection("Requests").add({
       "agentId": agentId,
-      "pilgrimId": user!.uid,
-      "pilgrimName": user.displayName ?? "Pilgrim",
-      "pilgrimEmail": user.email ?? "",
+      "pilgrimId": user.uid,
+      "pilgrimName": pilgrimName,
+      "username": pilgrimName,
+      "name": pilgrimName,
+      "fullName": pilgrimName,
+      "pilgrimEmail": email,
       "timestamp": FieldValue.serverTimestamp(),
       "status": "pending",
     });

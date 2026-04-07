@@ -14,9 +14,6 @@ class AgentRulesController extends GetxController {
   // Selected category
   var selectedCategory = RxnString();
 
-  // Visibility toggle
-  var isPublic = true.obs;
-
   // Loading state
   var isLoading = false.obs;
 
@@ -29,8 +26,6 @@ class AgentRulesController extends GetxController {
     super.onInit();
     // Set default category
     selectedCategory.value = RuleCategories.all.first;
-    // Set default visibility to public
-    isPublic.value = true;
   }
 
   @override
@@ -88,7 +83,7 @@ class AgentRulesController extends GetxController {
         category: selectedCategory.value!,
         createdBy: currentAgentId!,
         createdAt: DateTime.now(),
-        isPublic: isPublic.value,
+        isPublic: false,
       );
 
       await _rulesService.addRule(rule);
@@ -128,7 +123,7 @@ class AgentRulesController extends GetxController {
         createdBy: currentAgentId!,
         createdAt: DateTime.now(), // This will be ignored in update
         updatedAt: DateTime.now(),
-        isPublic: isPublic.value,
+        isPublic: false,
       );
 
       await _rulesService.updateRule(editingRuleId.value!, rule);
@@ -204,7 +199,6 @@ class AgentRulesController extends GetxController {
     editingRuleId.value = rule.id;
     ruleTextController.text = rule.ruleText;
     selectedCategory.value = rule.category;
-    isPublic.value = rule.isPublic;
   }
 
   /// Cancel edit mode
@@ -218,7 +212,6 @@ class AgentRulesController extends GetxController {
   void clearForm() {
     ruleTextController.clear();
     selectedCategory.value = RuleCategories.all.first;
-    isPublic.value = true;
   }
 
   /// Validate rule text

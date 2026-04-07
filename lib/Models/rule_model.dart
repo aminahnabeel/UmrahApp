@@ -17,7 +17,7 @@ class RuleModel {
     required this.createdBy,
     required this.createdAt,
     this.updatedAt,
-    this.isPublic = true, // Default to public
+    this.isPublic = false,
   });
 
   /// Convert model to Firestore map
@@ -43,7 +43,7 @@ class RuleModel {
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       isPublic:
           data['isPublic'] ??
-          true, // Default to public for backward compatibility
+          false,
     );
   }
 

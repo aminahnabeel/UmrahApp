@@ -124,69 +124,31 @@ class AgentRulesManagementScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
 
-                        // Visibility Toggle
-                        Obx(
-                          () => Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: controller.isPublic.value
-                                    ? Colors.green.withOpacity(0.5)
-                                    : accentColor.withOpacity(0.5),
-                                width: 2,
-                              ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: accentColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: accentColor.withOpacity(0.5),
+                              width: 1.5,
                             ),
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  controller.isPublic.value
-                                      ? Icons.public
-                                      : Icons.lock,
-                                  color: controller.isPublic.value
-                                      ? Colors.green
-                                      : accentColor,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        controller.isPublic.value
-                                            ? 'Public Rule'
-                                            : 'Approved Users Only',
-                                        style: const TextStyle(
-                                          color: textColorPrimary,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        controller.isPublic.value
-                                            ? 'Visible to everyone'
-                                            : 'Only visible to approved users',
-                                        style: const TextStyle(
-                                          color: textColorSecondary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.lock, color: accentColor),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'All rules are visible only to approved members.',
+                                  style: TextStyle(
+                                    color: textColorPrimary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Switch(
-                                  value: controller.isPublic.value,
-                                  onChanged: (value) {
-                                    controller.isPublic.value = value;
-                                  },
-                                  activeColor: Colors.green,
-                                  inactiveThumbColor: accentColor,
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -364,31 +326,28 @@ class AgentRulesManagementScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Visibility Badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: rule.isPublic
-                        ? Colors.green.withOpacity(0.2)
-                        : accentColor.withOpacity(0.2),
+                    color: accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        rule.isPublic ? Icons.public : Icons.lock,
+                        Icons.lock,
                         size: 14,
-                        color: rule.isPublic ? Colors.green : accentColor,
+                        color: accentColor,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
-                        rule.isPublic ? 'Public' : 'Approved Only',
+                        'Approved Only',
                         style: TextStyle(
-                          color: rule.isPublic ? Colors.green : accentColor,
+                          color: accentColor,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),

@@ -159,7 +159,7 @@ class _AgentRulesViewScreenState extends State<AgentRulesViewScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isApproved ? 'Approved Member' : 'Public Viewer',
+                  isApproved ? 'Approved Member' : 'Access Restricted',
                   style: TextStyle(
                     color: bannerColor.withAlpha(200),
                     fontSize: 15,
@@ -169,7 +169,7 @@ class _AgentRulesViewScreenState extends State<AgentRulesViewScreen> {
                 Text(
                   isApproved
                       ? 'Accessing all exclusive agent rules.'
-                      : 'Showing public rules only. Contact agent for full access.',
+                      : 'Only approved members can view these rules.',
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
                 ),
               ],
@@ -229,7 +229,7 @@ class _AgentRulesViewScreenState extends State<AgentRulesViewScreen> {
                               ),
                             ],
                           ),
-                          if (isApproved && !rule.isPublic)
+                          if (isApproved)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
@@ -292,7 +292,9 @@ class _AgentRulesViewScreenState extends State<AgentRulesViewScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            isApproved ? "Agent hasn't posted any rules yet." : "No public guidelines available.",
+            isApproved
+                ? "Agent hasn't posted any rules yet."
+                : "You are not approved yet. Ask the agent to add you in approved members.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.grey.shade600),
           ),

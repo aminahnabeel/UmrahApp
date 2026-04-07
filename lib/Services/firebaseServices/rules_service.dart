@@ -121,25 +121,8 @@ class RulesService {
     });
   }
 
-  /// Get only public rules by a specific agent
-  Stream<List<RuleModel>> getPublicRulesByAgent(String agentId) {
-    return _rulesCollection
-        .where('createdBy', isEqualTo: agentId)
-        .where('isPublic', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return RuleModel.fromFirebase(
-              doc.data() as Map<String, dynamic>,
-              doc.id,
-            );
-          }).toList();
-        });
-  }
-
   /// Get visible rules for a user from a specific agent
-  /// Returns public rules + approved-only rules if user is approved
+  /// Returns rules only when user is approved by that agent.
   Stream<List<RuleModel>> getVisibleRulesForUser({
     required String agentId,
     required String userId,
@@ -151,11 +134,11 @@ class RulesService {
     );
 
     if (isApproved) {
-      // User is approved - return ALL rules from this agent
+      // Approved users can view all rules from this agent.
       yield* getRulesByAgent(agentId);
     } else {
-      // User is not approved - return only public rules
-      yield* getPublicRulesByAgent(agentId);
+      // Unapproved users cannot view any rules.
+      yield* Stream.value([]);
     }
   }
 
@@ -163,27 +146,10 @@ class RulesService {
   Stream<List<RuleModel>> getVisibleRulesForCurrentUser(String agentId) async* {
     final uid = currentUserId;
     if (uid == null) {
-      yield* getPublicRulesByAgent(agentId);
+      yield* Stream.value([]);
       return;
     }
 
     yield* getVisibleRulesForUser(agentId: agentId, userId: uid);
-  }
-
-  /// Get approved-only rules by agent (for agent's own view)
-  Stream<List<RuleModel>> getApprovedOnlyRulesByAgent(String agentId) {
-    return _rulesCollection
-        .where('createdBy', isEqualTo: agentId)
-        .where('isPublic', isEqualTo: false)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return RuleModel.fromFirebase(
-              doc.data() as Map<String, dynamic>,
-              doc.id,
-            );
-          }).toList();
-        });
   }
 }

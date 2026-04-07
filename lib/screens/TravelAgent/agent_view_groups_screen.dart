@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:smart_umrah_app/Models/approved_user_model.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/approved_users_service.dart';
@@ -286,6 +287,29 @@ class AgentViewGroupsScreen extends StatelessWidget {
                   agentId: agentId,
                   userId: member.userId,
                 );
+
+                // Re-enable request flow on user side by resetting previous accepted requests.
+                final requestSnapshot = await FirebaseFirestore.instance
+                    .collection('Requests')
+                    .where('agentId', isEqualTo: agentId)
+                    .get();
+
+                final matchingDocs = requestSnapshot.docs.where(
+                  (doc) => (doc.data()['pilgrimId'] ?? '').toString() == member.userId,
+                );
+
+                final batch = FirebaseFirestore.instance.batch();
+                for (final doc in matchingDocs) {
+                  final status = (doc.data()['status'] ?? '').toString().toLowerCase();
+                  if (status == 'approved' || status == 'accepted' || status == 'pending') {
+                    batch.update(doc.reference, {
+                      'status': 'declined',
+                      'removedFromGroupAt': FieldValue.serverTimestamp(),
+                    });
+                  }
+                }
+                await batch.commit();
+
                 Get.snackbar(
                   'Success',
                   '${member.userName} removed from approved group',
