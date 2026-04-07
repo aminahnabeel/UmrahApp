@@ -20,15 +20,15 @@ class AgentEmailVerificationScreen extends StatefulWidget {
 class _AgentEmailVerificationScreenState
     extends State<AgentEmailVerificationScreen> {
   late Timer _verificationCheckTimer;
-  late Timer _resendCooldownTimer;
+  Timer? _resendCooldownTimer;
   int _remainingTime = 60;
+  int _cooldownDuration = 60;
   bool _canResend = false;
   bool _isVerifying = false;
 
   @override
   void initState() {
     super.initState();
-    sendVerificationEmail();
     startResendCooldown();
     startPeriodicVerificationCheck();
   }
@@ -41,10 +41,15 @@ class _AgentEmailVerificationScreenState
     });
   }
 
-  void startResendCooldown() {
+  void startResendCooldown({int seconds = 60}) {
+    if (_resendCooldownTimer?.isActive ?? false) {
+      _resendCooldownTimer?.cancel();
+    }
+
     setState(() {
       _canResend = false;
-      _remainingTime = 60;
+      _remainingTime = seconds;
+      _cooldownDuration = seconds;
     });
 
     _resendCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -56,65 +61,109 @@ class _AgentEmailVerificationScreenState
         setState(() {
           _canResend = true;
         });
-        _resendCooldownTimer.cancel();
+        _resendCooldownTimer?.cancel();
       }
     });
   }
 
-  Future<void> sendVerificationEmail() async {
+  Future<bool> sendVerificationEmail() async {
+    if (!mounted) return false;
+
     setState(() {
       _isVerifying = true;
     });
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await user?.sendEmailVerification();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Verification email sent to ${widget.emailAddress}'),
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: 'No logged-in user found. Please sign in again.',
+        );
+      }
+
+      await user.sendEmailVerification();
+      if (mounted) {
+        Get.snackbar(
+          'Email Sent',
+          'Verification email sent to ${widget.emailAddress}',
+          snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to send verification email: $e'),
+          colorText: Colors.white,
+        );
+      }
+      return true;
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String message;
+        if (e.code == 'too-many-requests') {
+          startResendCooldown(seconds: 300);
+          message =
+              'Too many attempts. Please wait a few minutes before requesting another email.';
+        } else if (e.code == 'user-not-found') {
+          message = 'Session expired. Please sign in again.';
+        } else {
+          message = e.message ?? 'Failed to send verification email.';
+        }
+
+        Get.snackbar(
+          'Error',
+          message,
+          snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
-        ),
-      );
+          colorText: Colors.white,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        Get.snackbar(
+          'Error',
+          'Something went wrong while sending the verification email.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } finally {
-      setState(() {
-        _isVerifying = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isVerifying = false;
+        });
+      }
     }
+    return false;
   }
 
   Future<void> checkEmailVerification() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      await user?.reload();
+      if (user == null) return;
 
-      if (user?.emailVerified ?? false) {
+      await user.reload();
+
+      if (user.emailVerified) {
         // Cancel timers
         _verificationCheckTimer.cancel();
-        _resendCooldownTimer.cancel();
+        _resendCooldownTimer?.cancel();
 
         // Save verification state
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isEmailVerified', true);
-        await prefs.setString('userEmail', user?.email ?? '');
+        await prefs.setString('userEmail', user.email ?? '');
 
         // Navigate to home screen
-        Get.offAllNamed(AppRoutes.agentsignin);
+        if (mounted) {
+          Get.offAllNamed(AppRoutes.agentsignin);
+        }
       }
     } catch (e) {
-      print('Error checking email verification: $e');
+      debugPrint('Error checking email verification: $e');
     }
   }
 
   @override
   void dispose() {
     _verificationCheckTimer.cancel();
-    _resendCooldownTimer.cancel();
+    _resendCooldownTimer?.cancel();
     super.dispose();
   }
 
@@ -169,7 +218,7 @@ class _AgentEmailVerificationScreenState
               CircularPercentIndicator(
                 radius: 60.0,
                 lineWidth: 10.0,
-                percent: _remainingTime / 60,
+                percent: (_remainingTime / _cooldownDuration).clamp(0.0, 1.0),
                 center: Text(
                   '$_remainingTime',
                   style: const TextStyle(
@@ -191,9 +240,11 @@ class _AgentEmailVerificationScreenState
                     ? ElevatedButton(
                         onPressed: _isVerifying
                             ? null
-                            : () {
-                                sendVerificationEmail();
-                                startResendCooldown();
+                            : () async {
+                                final sent = await sendVerificationEmail();
+                                if (sent) {
+                                  startResendCooldown();
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepPurple,

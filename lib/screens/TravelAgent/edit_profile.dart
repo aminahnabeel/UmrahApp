@@ -37,6 +37,13 @@ class EditAgentProfileScreen extends StatelessWidget {
   late final TextEditingController _dobController = TextEditingController(
     text: userProfile.dateOfBirth,
   );
+  late final RxString _selectedGender = (() {
+    final gender = (userProfile.gender ?? '').toLowerCase();
+    if (gender == 'male') return 'Male';
+    if (gender == 'female') return 'Female';
+    if (gender == 'other') return 'Other';
+    return '';
+  })().obs;
 
   final RxBool isLoading = false.obs;
 
@@ -147,10 +154,81 @@ class EditAgentProfileScreen extends StatelessWidget {
                   labelText: "Enter your new Permanent Address",
                 ),
                 const SizedBox(height: 15),
-                customTextField(
-                  "Enter DOB like in ID card",
+                TextFormField(
                   controller: _dobController,
-                  labelText: "Enter DOB like in ID card",
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    hintText: "Enter DOB like in ID card",
+                    labelText: "Enter DOB like in ID card",
+                    prefixIcon: const Icon(Icons.calendar_today),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                  ),
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(now.year - 18, now.month, now.day),
+                      firstDate: DateTime(1900),
+                      lastDate: now,
+                    );
+
+                    if (picked != null) {
+                      _dobController.text =
+                          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Date of Birth is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 15),
+                Obx(
+                  () => DropdownButtonFormField<String>(
+                    value: _selectedGender.value.isEmpty
+                        ? null
+                        : _selectedGender.value,
+                    decoration: InputDecoration(
+                      hintText: "Select Gender",
+                      labelText: "Gender",
+                      prefixIcon: const Icon(Icons.wc),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Male', child: Text('Male')),
+                      DropdownMenuItem(value: 'Female', child: Text('Female')),
+                      DropdownMenuItem(value: 'Other', child: Text('Other')),
+                    ],
+                    onChanged: (value) {
+                      _selectedGender.value = value ?? '';
+                    },
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Gender is required';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
 
                 const SizedBox(height: 25),
@@ -245,7 +323,9 @@ class EditAgentProfileScreen extends StatelessWidget {
                               ? existingProfile?.dateOfBirth
                               : _dobController.text.trim(),
 
-                          gender: existingProfile?.gender, // unchanged
+                          gender: _selectedGender.value.trim().isEmpty
+                              ? existingProfile?.gender
+                              : _selectedGender.value.trim(),
 
                           profileImageUrl:
                               uploadedImageUrl ??

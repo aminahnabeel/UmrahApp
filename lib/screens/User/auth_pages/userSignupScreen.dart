@@ -92,7 +92,7 @@ class UserSignUpScreen extends StatelessWidget {
                   _buildTextField(_addressController, "Permanent Address", Icons.location_on),
                   const SizedBox(height: 15),
                   _buildTextField(_passportnumberController, "Passport Number", Icons.badge, 
-                      keyboardType: TextInputType.number),
+                      keyboardType: TextInputType.text),
 
                   const SizedBox(height: 30),
 

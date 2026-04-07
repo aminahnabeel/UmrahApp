@@ -35,6 +35,7 @@ class ShowAgentProfile extends StatelessWidget {
           }
 
           final profile = snapshot.data!;
+          final isMale = (profile.gender ?? '').toLowerCase() == 'male';
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -50,7 +51,7 @@ class ShowAgentProfile extends StatelessWidget {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        profile.gender!.toLowerCase() == 'male'
+                        isMale
                             ? CircleAvatar(
                                 radius: 100,
                                 backgroundImage: profile.profileImageUrl != null
@@ -155,7 +156,7 @@ class ShowAgentProfile extends StatelessWidget {
                 const SizedBox(height: 20),
                 // --- Personal Information ---
                 buildCategoryCard(context, "Personal Information", [
-                  buildProfileField("Name", profile.permanentAddress),
+                  buildProfileField("Name", profile.name),
                   buildProfileField("DOB", profile.dateOfBirth),
                   buildProfileField("Email", profile.email),
                   buildProfileField("Gender", profile.gender),

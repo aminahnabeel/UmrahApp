@@ -179,6 +179,85 @@ class TravelAgentSignUpScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
+                  // Date of Birth
+                  TextFormField(
+                    controller: _dateController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      hintText: "Date of Birth",
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                    ),
+                    onTap: () async {
+                      final now = DateTime.now();
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime(now.year - 18, now.month, now.day),
+                        firstDate: DateTime(1900),
+                        lastDate: now,
+                      );
+
+                      if (picked != null) {
+                        _dateController.text =
+                            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Date of Birth is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Gender
+                  Obx(
+                    () => DropdownButtonFormField<String>(
+                      value: selectedGender.value.isEmpty
+                          ? null
+                          : selectedGender.value,
+                      decoration: InputDecoration(
+                        hintText: "Select Gender",
+                        prefixIcon: const Icon(Icons.wc),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'Male', child: Text('Male')),
+                        DropdownMenuItem(value: 'Female', child: Text('Female')),
+                        DropdownMenuItem(value: 'Other', child: Text('Other')),
+                      ],
+                      onChanged: (value) {
+                        selectedGender.value = value ?? '';
+                      },
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Gender is required';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
                   // Address
                   customTextField(
                     "Permanent Address",
