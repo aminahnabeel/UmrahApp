@@ -59,4 +59,30 @@ class UserProfileDatamodel {
       isUser: data['isUser'] ?? true,
     );
   }
+
+  UserProfileDatamodel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? password,
+    String? permanentAddress,
+    String? gender,
+    String? dateOfBirth,
+    String? passportNumber,
+    double? expenses,
+    bool? isUser,
+  }) {
+    return UserProfileDatamodel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      permanentAddress: permanentAddress ?? this.permanentAddress,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      passportNumber: passportNumber ?? this.passportNumber,
+      expenses: expenses ?? this.expenses,
+      isUser: isUser ?? this.isUser,
+    );
+  }
 }

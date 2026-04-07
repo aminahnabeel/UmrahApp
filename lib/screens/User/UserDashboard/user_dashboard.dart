@@ -1,32 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:smart_umrah_app/DataLayer/User/UserData/user_features.dart';
-import 'package:smart_umrah_app/Models/UserProfileDataModel/user_profile_datamodel.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/AuthServices/logout.dart';
-import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/UserProfileData/FetchingProfile/fetch_profile.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/chatbot.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:smart_umrah_app/screens/User/UserDashboard/profile_screen.dart'; 
+import 'package:smart_umrah_app/screens/User/UserDashboard/user_dashboard_controller.dart';
+import 'package:url_launcher/url_launcher.dart'; // Nusuk launch karne ke liye
 import '../UserFeatures/umrah_journal_screen.dart';
-
-class UserDashboardController extends GetxController {
-  var selectedIndex = 0.obs;
-  Rxn<UserProfileDatamodel> currentUser = Rxn<UserProfileDatamodel>();
-
-  @override
-  void onInit() {
-    super.onInit();
-    loadUser();
-  }
-
-  void changeTab(int index) {
-    selectedIndex.value = index;
-  }
-
-  loadUser() async {
-    final user = await fetchProfile();
-    currentUser.value = user;
-  }
-}
 
 class UserDashboard extends StatelessWidget {
   UserDashboard({super.key});
@@ -35,8 +15,8 @@ class UserDashboard extends StatelessWidget {
 
   static const Color primaryBlue = Color(0xFF0D47A1); 
   static const Color scaffoldBgColor = Color(0xFFF4F7FA); 
-  static const Color cardColor = Colors.white;
 
+  // --- Nusuk App Launch Logic ---
   void openNusuk(BuildContext context) async {
     final Uri appUri = Uri.parse("nusuk://");
     final Uri playStoreUri = Uri.parse("https://play.google.com/store/apps/details?id=com.moh.nusukapp");
@@ -80,7 +60,8 @@ class UserDashboard extends StatelessWidget {
               index: controller.selectedIndex.value,
               children: [
                 _buildHomeContent(context),
-                _buildJournalContent(context),
+                UmrahJournalScreen(), 
+                const ProfileDetailScreen(), // Profile screen yahan add kar di
               ],
             );
           }),
@@ -101,9 +82,7 @@ class UserDashboard extends StatelessWidget {
         decoration: BoxDecoration(
           color: primaryBlue,
           borderRadius: BorderRadius.circular(35),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 5)),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(35),
@@ -111,6 +90,7 @@ class UserDashboard extends StatelessWidget {
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded, size: 22), label: 'Home'),
               BottomNavigationBarItem(icon: Icon(Icons.auto_stories_rounded, size: 22), label: 'Journal'),
+              BottomNavigationBarItem(icon: Icon(Icons.person_pin_rounded, size: 22), label: 'Profile'),
             ],
             currentIndex: controller.selectedIndex.value,
             selectedItemColor: Colors.white,
@@ -134,7 +114,6 @@ class UserDashboard extends StatelessWidget {
       Colors.purple.shade600, Colors.teal.shade600, Colors.amber.shade800
     ];
 
-    // Hataya gaya SingleChildScrollView taake scroll na ho
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Column(
@@ -146,12 +125,9 @@ class UserDashboard extends StatelessWidget {
               )),
           const Text("Ready for your blessed journey?", style: TextStyle(fontSize: 14, color: Colors.black54)),
           const SizedBox(height: 20),
-          
-          // Expanded use kiya taake Grid screen ke baaki hisse mein fit ho jaye
           Expanded(
             child: GridView.builder(
-              padding: const EdgeInsets.only(bottom: 100), // Bottom bar ke liye space
-              // Agar cards kam hain aur scroll band karna hai toh physics: NeverScrollableScrollPhysics()
+              padding: const EdgeInsets.only(bottom: 100), 
               physics: const BouncingScrollPhysics(), 
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: screenWidth > 600 ? 3 : 2,
@@ -159,8 +135,10 @@ class UserDashboard extends StatelessWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.0, 
               ),
+              // Item count +1 kyunke pehla card Nusuk ka hai
               itemCount: userFeatures.length + 1,
               itemBuilder: (context, index) {
+                // Pehla card (Index 0) hamesha Nusuk App ka hoga
                 if (index == 0) {
                   return _buildDashboardCard(
                     icon: Icons.travel_explore_rounded,
@@ -170,6 +148,8 @@ class UserDashboard extends StatelessWidget {
                     onTap: () => openNusuk(context),
                   );
                 }
+
+                // Baaki cards userFeatures list se aayenge
                 final feature = userFeatures[index - 1];
                 return _buildDashboardCard(
                   icon: feature['icon'],
@@ -186,32 +166,13 @@ class UserDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildJournalContent(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.auto_stories_rounded, size: 80, color: primaryBlue.withOpacity(0.1)),
-          const Text("Umrah Journal", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryBlue)),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: () => Get.to(() => UmrahJournalScreen()),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text("New Entry"),
-            style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDashboardCard({required IconData icon, required Color iconColor, required String title, required String description, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
         decoration: BoxDecoration(
-          color: cardColor,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4))],
         ),
