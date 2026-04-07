@@ -4,6 +4,7 @@ import 'package:smart_umrah_app/Models/UserProfileDataModel/user_profile_datamod
 import 'package:smart_umrah_app/Services/firebaseServices/AuthServices/logout.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/firebaseDatabase/UserProfileData/newUser_profile_data_collection.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/user_dashboard_controller.dart';
+import 'package:smart_umrah_app/widgets/image_upload_widget.dart';
 
 class ProfileDetailScreen extends StatelessWidget {
   const ProfileDetailScreen({super.key});
@@ -46,14 +47,52 @@ class ProfileDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 40, top: 10),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 55,
-                      backgroundColor: Colors.white,
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.blue.shade100,
-                        child: Text(firstLetter, style: const TextStyle(fontSize: 45, fontWeight: FontWeight.bold, color: primaryBlue)),
-                      ),
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 55,
+                          backgroundColor: Colors.white,
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.blue.shade100,
+                            backgroundImage: (user?.profileImageUrl.isNotEmpty ?? false)
+                                ? NetworkImage(user!.profileImageUrl)
+                                : null,
+                            child: (user?.profileImageUrl.isNotEmpty ?? false)
+                                ? null
+                                : Text(
+                                    firstLetter,
+                                    style: const TextStyle(
+                                      fontSize: 45,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryBlue,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            onTap: () => _showProfileImageDialog(
+                              controller,
+                              user?.profileImageUrl ?? "",
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: primaryBlue,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 15),
                     Text(user?.name ?? "Loading...", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
@@ -124,6 +163,21 @@ class ProfileDetailScreen extends StatelessWidget {
     );
   }
 
+  void _showProfileImageDialog(UserDashboardController controller, String currentImageUrl) {
+    Get.defaultDialog(
+      title: "Update Profile Image",
+      content: ImageUploadWidget(
+        size: 120,
+        borderRadius: 60,
+        initialImageUrl: currentImageUrl,
+        onImageUploaded: (imageUrl) {
+          _updateUserData(controller, "profileImage", imageUrl);
+        },
+      ),
+      textCancel: "CLOSE",
+    );
+  }
+
   // --- 1. Text Field Edit Dialog ---
   void _showEditDialog(BuildContext context, String field, String currentValue, UserDashboardController controller) {
     final textController = TextEditingController(text: currentValue);
@@ -180,6 +234,7 @@ class ProfileDetailScreen extends StatelessWidget {
       dateOfBirth: field == "dob" ? newValue : null,
       passportNumber: field == "passport" ? newValue : null,
       permanentAddress: field == "address" ? newValue : null,
+      profileImageUrl: field == "profileImage" ? newValue : null,
     );
 
     // Save to Firebase

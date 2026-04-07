@@ -70,6 +70,7 @@ class UserProfileDatamodel {
     String? dateOfBirth,
     String? passportNumber,
     double? expenses,
+    String? profileImageUrl,
     bool? isUser,
   }) {
     return UserProfileDatamodel(
@@ -82,6 +83,7 @@ class UserProfileDatamodel {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       passportNumber: passportNumber ?? this.passportNumber,
       expenses: expenses ?? this.expenses,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isUser: isUser ?? this.isUser,
     );
   }
