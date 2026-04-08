@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:smart_umrah_app/DataLayer/User/UserData/user_features.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/AuthServices/logout.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/chatbot.dart';
-import 'package:smart_umrah_app/screens/User/UserDashboard/profile_screen.dart'; 
+import 'package:smart_umrah_app/screens/User/UserDashboard/profile_screen.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/user_dashboard_controller.dart';
-import 'package:url_launcher/url_launcher.dart'; // Nusuk launch karne ke liye
+import 'package:url_launcher/url_launcher.dart';
 import '../UserFeatures/umrah_journal_screen.dart';
 
 class UserDashboard extends StatelessWidget {
@@ -13,10 +13,10 @@ class UserDashboard extends StatelessWidget {
 
   final UserDashboardController controller = Get.put(UserDashboardController());
 
-  static const Color primaryBlue = Color(0xFF0D47A1); 
-  static const Color scaffoldBgColor = Color(0xFFF4F7FA); 
+  static const Color primaryBlue = Color(0xFF0D47A1);
+  static const Color scaffoldBgColor = Color(0xFFF4F7FA);
+  static const Color cardColor = Colors.white;
 
-  // --- Nusuk App Launch Logic ---
   void openNusuk(BuildContext context) async {
     final Uri appUri = Uri.parse("nusuk://");
     final Uri playStoreUri = Uri.parse("https://play.google.com/store/apps/details?id=com.moh.nusukapp");
@@ -24,6 +24,7 @@ class UserDashboard extends StatelessWidget {
     if (await canLaunchUrl(appUri)) {
       await launchUrl(appUri);
     } else {
+      if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -40,49 +41,61 @@ class UserDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: scaffoldBgColor,
-      appBar: AppBar(
-        backgroundColor: primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text("User Dashboard", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        actions: [
-          IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, size: 22), onPressed: () => Get.to(() => ChatbotScreen())),
-          IconButton(icon: const Icon(Icons.logout_rounded, size: 22), onPressed: () async => await logoutUser()),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Obx(() {
-            return IndexedStack(
+    return Obx(() {
+      return Scaffold(
+        backgroundColor: scaffoldBgColor,
+        // Yahan logic hai: Agar Home (0) hai to AppBar dikhao, warna null (hide)
+        appBar: controller.selectedIndex.value == 0 
+          ? AppBar(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              centerTitle: true,
+              title: const Text("User Dashboard", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 22), 
+                  onPressed: () => Get.to(() => ChatbotScreen())
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout_rounded, size: 22), 
+                  onPressed: () async => await logoutUser()
+                ),
+              ],
+            )
+          : null, 
+        
+        body: Stack(
+          children: [
+            IndexedStack(
               index: controller.selectedIndex.value,
               children: [
                 _buildHomeContent(context),
-                UmrahJournalScreen(), 
-                const ProfileDetailScreen(), // Profile screen yahan add kar di
+                UmrahJournalScreen(), // Iska apna app bar show hoga
+                const ProfileDetailScreen(), 
               ],
-            );
-          }),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: _buildFloatingBottomBar(),
-          ),
-        ],
-      ),
-    );
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: _buildFloatingBottomBar(),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildFloatingBottomBar() {
-    return Obx(() => Padding(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: Container(
-        height: 65, 
+        height: 65,
         decoration: BoxDecoration(
           color: primaryBlue,
           borderRadius: BorderRadius.circular(35),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 5))],
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 10, offset: const Offset(0, 5)),
+          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(35),
@@ -104,13 +117,13 @@ class UserDashboard extends StatelessWidget {
           ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildHomeContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final List<Color> iconColors = [
-      Colors.orange.shade700, Colors.green.shade600, Colors.redAccent.shade400, 
+      Colors.orange.shade700, Colors.green.shade600, Colors.redAccent.shade400,
       Colors.purple.shade600, Colors.teal.shade600, Colors.amber.shade800
     ];
 
@@ -128,32 +141,28 @@ class UserDashboard extends StatelessWidget {
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.only(bottom: 100), 
-              physics: const BouncingScrollPhysics(), 
+              physics: const BouncingScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: screenWidth > 600 ? 3 : 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 1.0, 
+                childAspectRatio: 1.0,
               ),
-              // Item count +1 kyunke pehla card Nusuk ka hai
               itemCount: userFeatures.length + 1,
               itemBuilder: (context, index) {
-                // Pehla card (Index 0) hamesha Nusuk App ka hoga
                 if (index == 0) {
                   return _buildDashboardCard(
                     icon: Icons.travel_explore_rounded,
-                    iconColor: Colors.blue.shade800, 
+                    iconColor: Colors.blue.shade800,
                     title: "Nusuk App",
                     description: "Apply for Umrah",
                     onTap: () => openNusuk(context),
                   );
                 }
-
-                // Baaki cards userFeatures list se aayenge
                 final feature = userFeatures[index - 1];
                 return _buildDashboardCard(
                   icon: feature['icon'],
-                  iconColor: iconColors[(index - 1) % iconColors.length], 
+                  iconColor: iconColors[(index - 1) % iconColors.length],
                   title: feature['title'],
                   description: feature['description'],
                   onTap: () => Get.toNamed(feature['route']),
@@ -172,7 +181,7 @@ class UserDashboard extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4))],
         ),
