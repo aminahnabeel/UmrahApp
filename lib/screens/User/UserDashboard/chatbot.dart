@@ -107,7 +107,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
 
   static const String _apiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: 'AIzaSyBPycP8DcaMxret0Gsd5yEHPKQwutv4_1Q',
+    defaultValue: 'AIzaSyDeMgpSnR4tsBByq74TPKds9B_87fnawnc',
   );
   static const String _apiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -119,6 +119,144 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     'ar': 'الرد باللغة العربية (Respond in Arabic).',
     'ur': 'اردو میں جواب دیں (Respond in Urdu).',
     'id': 'Jawab dalam Bahasa Indonesia (Respond in Indonesian).',
+  };
+
+  static const Map<String, List<String>> _topicKeywords = {
+    'ihram': [
+      'ihram',
+      'ihraam',
+      'miqat',
+      'meeqat',
+      'talbiyah',
+      'labbayk',
+      'niyyah',
+      'intention',
+      'perfume',
+      'scented',
+      'hair',
+      'nails',
+      'ghusl',
+      'wudu',
+    ],
+    'tawaf': [
+      'tawaf',
+      'tawaaf',
+      'kaaba',
+      'kaba',
+      'hajar al aswad',
+      'black stone',
+      'idtiba',
+      'ramal',
+      'maqam ibrahim',
+      'hijr ismail',
+      'rukn yamani',
+    ],
+    'zamzam': [
+      'zamzam',
+      'zam zam',
+      'zam zam water',
+      'zamzam water',
+      'zam zam well',
+      'drink zamzam',
+      'how to drink zamzam',
+      'how to drink zam zam water',
+      'water of zamzam',
+    ],
+    'sai': [
+      'sai',
+      'sa i',
+      'sa\'i',
+      'safa',
+      'marwah',
+      'marwa',
+      'green lights',
+      'green markers',
+      'jog',
+      'run',
+    ],
+    'halq': [
+      'halq',
+      'taqsir',
+      'tasqir',
+      'shave',
+      'shaving',
+      'trim',
+      'haircut',
+      'clip',
+      'finish umrah',
+      'exit ihram',
+    ],
+    'travel': [
+      'visa',
+      'passport',
+      'hotel',
+      'accommodation',
+      'flight',
+      'airport',
+      'bag',
+      'packing',
+      'vaccination',
+      'medicine',
+      'hydration',
+      'transport',
+    ],
+    'women': [
+      'women',
+      'woman',
+      'female',
+      'menstruation',
+      'period',
+      'niqab',
+      'gloves',
+      'hijab',
+      'socks',
+      'modest clothing',
+    ],
+    'mistakes': [
+      'mistake',
+      'error',
+      'what if',
+      'forgot',
+      'invalid',
+      'penalty',
+      'dam',
+      'charity',
+      'sacrifice',
+      'crowd',
+      'stuck',
+    ],
+    'general': [
+      'umrah',
+      'hajj',
+      'dua',
+      'prayer',
+      'salah',
+      'zamzam',
+      'kaaba',
+      'haram',
+      'pilgrim',
+    ],
+  };
+
+  static const Map<String, String> _topicGuidance = {
+    'ihram':
+        'If the user is asking about Ihram, explain the intention, Talbiyah, miqat, clothing rules, and what is prohibited or permitted. Mention that accidental mistakes should be checked with a qualified scholar if the ruling depends on details.',
+    'tawaf':
+        'If the user is asking about Tawaf, give the 7-circuit order, Black Stone start, Kaaba on the left, wudu requirement, Hijr Ismail boundary, and what to do if the crowd is dense.',
+    'sai':
+        'If the user is asking about Sai, explain the 7 trips between Safa and Marwah, the green markers for men, the starting and ending points, and that breaks are allowed when needed.',
+    'halq':
+        'If the user is asking about Halq or Taqsir, explain how men and women finish Umrah, what length is required for trimming, and that this step ends Ihram restrictions.',
+    'zamzam':
+      'If the user is asking about Zamzam, explain that it is blessed water from Makkah. Give practical guidance on how to drink it respectfully, make dua, and mention that it is commonly drunk after Tawaf or in the Haram.',
+    'travel':
+        'If the user is asking about travel, focus on visa, passport, packing, health, hydration, prayer planning, and practical readiness for pilgrims.',
+    'women':
+        'If the user is asking about women-specific rulings, answer respectfully and carefully, especially for clothing, menstruation, niqab, gloves, and practical worship guidance.',
+    'mistakes':
+        'If the user is asking about a mistake or problem, explain the correction first, then note whether charity, sacrifice, or scholarly guidance may be needed depending on the exact case.',
+    'general':
+        'If the user is asking a broad Umrah question, answer directly, then connect it to the correct ritual step with a practical next action.',
   };
 
   static const String _umrahKnowledgeBase = '''
@@ -365,8 +503,6 @@ When answering questions:
 - Emphasize spiritual significance alongside physical actions
 ''';
 
-  late final String _systemPrompt;
-
   final List<ChatMessage> _messages = [
     ChatMessage(
       text:
@@ -381,23 +517,192 @@ When answering questions:
     super.initState();
     _initializeAnimations();
     _startLoadingSequence();
-    _systemPrompt = _buildSystemPrompt();
     _messageController.addListener(() {
       setState(() {});
     });
   }
 
-  String _buildSystemPrompt() {
+  String _buildSystemPrompt(String userMessage) {
     final languageInstruction =
-        _languageInstructions[_language] ?? _languageInstructions['en']!;
+        _languageInstructions[_detectLanguage(userMessage)] ??
+            _languageInstructions['en']!;
+    final targetedGuidance = _buildTargetedGuidance(userMessage);
 
     return '''$_umrahKnowledgeBase
 
 $languageInstruction
+$targetedGuidance
 
 Be helpful, compassionate, and provide accurate information.
 Keep responses concise but informative (2-4 paragraphs unless detailed steps are requested).
+Do not start answers with greetings like Wa Alaikum Assalam unless the user's message is only a greeting.
 If a question needs a scholar-specific ruling, mention this clearly and recommend consulting qualified scholars on-site.''';
+  }
+
+
+  String _detectLanguage(String text) {
+    if (RegExp(r'[\u0600-\u06FF]').hasMatch(text)) {
+      return RegExp(r'[ےںٹڈڑگھ]').hasMatch(text) ? 'ur' : 'ar';
+    }
+
+    final lower = _normalizeText(text);
+    if (RegExp(r'\b(bahasa|indonesia|indonesian)\b').hasMatch(lower)) {
+      return 'id';
+    }
+
+    return 'en';
+  }
+
+  String _normalizeText(String text) {
+    return text.toLowerCase().replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), ' ');
+  }
+
+  List<String> _matchedTopics(String text) {
+    final normalized = _normalizeText(text);
+    final matches = <MapEntry<String, int>>[];
+
+    for (final entry in _topicKeywords.entries) {
+      var score = 0;
+      for (final keyword in entry.value) {
+        if (normalized.contains(_normalizeText(keyword))) {
+          score++;
+        }
+      }
+      if (score > 0) {
+        matches.add(MapEntry(entry.key, score));
+      }
+    }
+
+    matches.sort((a, b) => b.value.compareTo(a.value));
+    return matches.map((entry) => entry.key).take(2).toList();
+  }
+
+  Map<String, int> _topicScores(String text) {
+    final normalized = _normalizeText(text);
+    final scores = <String, int>{};
+
+    for (final entry in _topicKeywords.entries) {
+      var score = 0;
+      for (final keyword in entry.value) {
+        if (normalized.contains(_normalizeText(keyword))) {
+          score++;
+        }
+      }
+      if (score > 0) {
+        scores[entry.key] = score;
+      }
+    }
+
+    return scores;
+  }
+
+  String? _directTopicResponse(String userMessage) {
+    final scores = _topicScores(userMessage);
+    if (scores.isEmpty) {
+      return null;
+    }
+
+    final sortedTopics = scores.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final topTopic = sortedTopics.first.key;
+    final topScore = sortedTopics.first.value;
+    final wordCount = _normalizeText(userMessage)
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .length;
+
+    final clearSingleTopic = topScore >= 1 &&
+        (sortedTopics.length == 1 || topScore >= sortedTopics[1].value + 1 || wordCount <= 5);
+    if (!clearSingleTopic) {
+      return null;
+    }
+
+    switch (topTopic) {
+      case 'ihram':
+        return 'Ihram starts with ghusl or wudu, then the intention for Umrah and Talbiyah. After that, avoid perfume, scented products, cutting hair or nails, and other Ihram restrictions until Umrah is complete.';
+      case 'tawaf':
+        return 'Tawaf is 7 counterclockwise circles around the Kaaba. Start at the Black Stone line, keep the Kaaba on your left, stay in wudu, and go around the Hijr Ismail instead of through it.';
+      case 'zamzam':
+        return 'Zamzam is blessed water in Makkah. Say Bismillah, drink it respectfully, and make dua. It is commonly drunk after Tawaf or while in the Haram.';
+      case 'sai':
+        return 'Sai is 7 trips between Safa and Marwah, starting at Safa and ending at Marwah. Men jog between the green markers, women walk normally, and breaks are allowed if needed.';
+      case 'halq':
+        return 'Halq or Taqsir is the final step of Umrah. Men may shave the whole head or trim, while women trim a small amount from the ends of the hair.';
+      case 'travel':
+        return 'For travel, check passport validity, visa, vaccination requirements, hotel booking, medicines, and walking comfort. Plan around prayer times and stay hydrated in Makkah.';
+      case 'women':
+        return 'For women, keep the guidance focused on modest clothing, no perfume after Ihram, no niqab or gloves during Ihram, and the ruling for menstruation if that is the issue.';
+      case 'mistakes':
+        return 'If a mistake happens during Umrah, the exact correction depends on what happened and when. Some issues need charity, while others need scholarly guidance or sacrifice.';
+      default:
+        return null;
+    }
+  }
+
+  bool _isGreetingOnly(String text) {
+    final normalized = _normalizeText(text).trim();
+    if (normalized.isEmpty) {
+      return false;
+    }
+
+    final greetings = <String>{
+      'hi',
+      'hello',
+      'hey',
+      'salam',
+      'assalamualaikum',
+      'assalam o alaikum',
+      'assalamu alaikum',
+      'asalam o alikum',
+      'wa alaikum assalam',
+      'wa alaikum salam',
+      'walaikum assalam',
+      'walaikum salam',
+    };
+
+    if (greetings.contains(normalized)) {
+      return true;
+    }
+
+    final arabicGreeting = RegExp(r'^[\u0600-\u06FF\s]+$').hasMatch(normalized) &&
+        RegExp(r'السلام|عليكم|سلا[م]+').hasMatch(normalized);
+    return arabicGreeting;
+  }
+
+  String _greetingResponse() {
+    return 'Wa Alaikum Assalam.';
+  }
+
+  String _stripGreetingPrefix(String text) {
+    final trimmed = text.trimLeft();
+    final greetingPatterns = <RegExp>[
+      RegExp(r'^(wa\s*alaikum\s*assalam[!.،,:\-\s]*)', caseSensitive: false),
+      RegExp(r'^(wa\s*alikum\s*assalam[!.،,:\-\s]*)', caseSensitive: false),
+      RegExp(r'^(assalamu\s*alaikum[!.،,:\-\s]*)', caseSensitive: false),
+      RegExp(r'^(assalamualaikum[!.،,:\-\s]*)', caseSensitive: false),
+      RegExp(r'^(salam[!.،,:\-\s]*)', caseSensitive: false),
+    ];
+
+    var cleaned = trimmed;
+    for (final pattern in greetingPatterns) {
+      cleaned = cleaned.replaceFirst(pattern, '');
+    }
+
+    return cleaned.trimLeft();
+  }
+
+  String _buildTargetedGuidance(String userMessage) {
+    final topics = _matchedTopics(userMessage);
+    if (topics.isEmpty) {
+      return _topicGuidance['general']!;
+    }
+
+    final guidance = topics
+        .map((topic) => _topicGuidance[topic])
+        .whereType<String>()
+        .toList();
+    return guidance.join('\n');
   }
 
   void _initializeAnimations() {
@@ -457,6 +762,12 @@ If a question needs a scholar-specific ruling, mention this clearly and recommen
         throw Exception('GEMINI_API_KEY is missing.');
       }
 
+      final directResponse = _directTopicResponse(userMessage);
+      if (directResponse != null) {
+        return directResponse;
+      }
+
+      final systemPrompt = _buildSystemPrompt(userMessage);
       final conversationHistory = _buildConversationHistory();
 
       final contents = conversationHistory
@@ -470,23 +781,16 @@ If a question needs a scholar-specific ruling, mention this clearly and recommen
           )
           .toList();
 
-      contents.add({
-        'role': 'user',
-        'parts': [
-          {'text': userMessage},
-        ],
-      });
-
       final body = {
         'systemInstruction': {
           'parts': [
-            {'text': _systemPrompt},
+            {'text': systemPrompt},
           ],
         },
         'contents': contents,
         'generationConfig': {
-          'temperature': 0.7,
-          'topP': 0.95,
+          'temperature': 0.45,
+          'topP': 0.9,
           'topK': 40,
           'maxOutputTokens': 1024,
         },
@@ -518,11 +822,20 @@ If a question needs a scholar-specific ruling, mention this clearly and recommen
           ? (parts.first['text'] as String? ?? '')
           : '';
 
-      if (text.trim().isEmpty) {
+      final cleanedText = _isGreetingOnly(userMessage)
+          ? text.trim()
+          : _stripGreetingPrefix(text);
+
+      final fallbackDirectResponse = _directTopicResponse(userMessage);
+      if (cleanedText.trim().isEmpty && fallbackDirectResponse != null) {
+        return fallbackDirectResponse;
+      }
+
+      if (cleanedText.trim().isEmpty) {
         return _getFallbackResponse(userMessage);
       }
 
-      return text.trim();
+      return cleanedText.trim();
     } catch (e, st) {
       dev.log(
         'Error calling Gemini API',
@@ -535,41 +848,59 @@ If a question needs a scholar-specific ruling, mention this clearly and recommen
   }
 
   String _getFallbackResponse(String userMessage) {
-    final lower = userMessage.toLowerCase();
+    final topics = _matchedTopics(userMessage);
+    final topic = topics.isNotEmpty ? topics.first : 'general';
 
-    if (lower.contains('ihram')) {
-      return 'For Ihram, start with ghusl or wudu, wear proper Ihram clothing, make intention (Labbayka Umratan), then begin Talbiyah. Avoid perfume, cutting hair/nails, and other Ihram prohibitions until Umrah is completed.';
+    switch (topic) {
+      case 'ihram':
+        return 'Ihram begins with ghusl or wudu, then the intention for Umrah and Talbiyah: Labbayk Allahumma labbayk. From that point, avoid perfume, scented products, cutting hair or nails, and other Ihram restrictions until Umrah is completed. If you want, I can also give you the exact miqat and clothing rules.';
+      case 'tawaf':
+        return 'Tawaf is 7 counterclockwise circles around the Kaaba. Start at the Black Stone line, keep the Kaaba on your left, stay in wudu, and go around the Hijr Ismail instead of through it. After finishing, pray 2 rakah near Maqam Ibrahim if possible and drink Zamzam.';
+      case 'sai':
+        return 'Sai is 7 walks between Safa and Marwah, starting at Safa and ending at Marwah. Men jog between the green markers, women walk normally, and breaks are allowed if needed. After Sai, you move to Halq or Taqsir to complete Umrah.';
+      case 'halq':
+        return 'Halq or Taqsir is the final step of Umrah. Men may shave the whole head or trim, while women trim a small amount from the ends of the hair. After this, Ihram restrictions are lifted and Umrah is complete.';
+      case 'zamzam':
+        return 'Zamzam is blessed water in Makkah. You can drink it respectfully, preferably while facing the Qiblah if possible, say Bismillah, and make dua. It is often drunk after Tawaf or during a visit to the Haram.';
+      case 'travel':
+        return 'For travel, check passport validity, visa, vaccination requirements, hotel booking, medicines, and walking comfort. In Makkah, stay hydrated, plan around prayer times, and keep a simple route so you can focus on worship.';
+      case 'women':
+        return 'For women, Umrah guidance stays focused on modest clothing, no perfume after Ihram, no niqab or gloves during Ihram, and careful handling of menstruation rulings. If you want, I can answer the women-specific ruling for your exact step.';
+      case 'mistakes':
+        return 'If a mistake happens during Umrah, the correction depends on the exact action and timing. Some issues only need a fix or charity, while others need scholarly guidance or sacrifice. Tell me exactly what happened and I will narrow it down clearly.';
+      default:
+        return 'I can help with Ihram, Tawaf, Sai, Halq/Taqsir, Miqat, Talbiyah, women-specific rulings, travel prep, and common mistakes. Send me any Umrah word or situation and I will answer with the right step.';
     }
-
-    if (lower.contains('tawaf')) {
-      return 'Tawaf is 7 counterclockwise circuits around the Kaaba, starting from Black Stone alignment. Keep Kaaba on your left, remain in wudu, and avoid pushing in crowds. After 7 rounds, pray 2 rakah and drink Zamzam.';
-    }
-
-    if (lower.contains('sai') ||
-        lower.contains('sa\'i') ||
-        lower.contains('safa')) {
-      return 'Sai is 7 rounds between Safa and Marwah, starting at Safa and ending at Marwah. Men jog between green markers, women walk normally. You can pause briefly if needed, then continue from where you stopped.';
-    }
-
-    if (lower.contains('halq') ||
-        lower.contains('taqsir') ||
-        lower.contains('hair')) {
-      return 'To complete Umrah, perform Halq or Taqsir. Men may shave fully or trim; women trim a small length from hair ends. After this step, Ihram restrictions are lifted and Umrah is complete.';
-    }
-
-    if (lower.contains('visa') ||
-        lower.contains('travel') ||
-        lower.contains('hotel')) {
-      return 'Before travel, verify passport validity, Umrah visa, vaccination requirements, accommodation, and medications. During Umrah, stay hydrated, avoid heat peaks, and keep your movement plan simple around prayer times.';
-    }
-
-    return 'I can help with all Umrah steps: Ihram, Tawaf, Sai, and Halq/Taqsir, plus travel preparation and practical pilgrim tips. Tell me your current step and I will guide you clearly.';
   }
 
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
 
     final userMessage = _messageController.text.trim();
+
+    if (_isGreetingOnly(userMessage)) {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: userMessage,
+            isBot: false,
+            timestamp: DateTime.now(),
+          ),
+          );
+        _messages.add(
+          ChatMessage(
+            text: _greetingResponse(),
+            isBot: true,
+            timestamp: DateTime.now(),
+          ),
+        );
+      });
+
+      _messageController.clear();
+      _scrollToBottom();
+      return;
+    }
+
     setState(() {
       _messages.add(
         ChatMessage(text: userMessage, isBot: false, timestamp: DateTime.now()),
