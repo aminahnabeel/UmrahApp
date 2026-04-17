@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:smart_umrah_app/DataLayer/User/UserData/user_features.dart';
 import 'package:smart_umrah_app/Services/firebaseServices/AuthServices/logout.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/chatbot.dart';
+import 'package:smart_umrah_app/screens/User/UserDashboard/nusuk_info_screen.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/profile_screen.dart';
 import 'package:smart_umrah_app/screens/User/UserDashboard/user_dashboard_controller.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../UserFeatures/umrah_journal_screen.dart';
 
 class UserDashboard extends StatelessWidget {
@@ -16,28 +16,6 @@ class UserDashboard extends StatelessWidget {
   static const Color primaryBlue = Color(0xFF0D47A1);
   static const Color scaffoldBgColor = Color(0xFFF4F7FA);
   static const Color cardColor = Colors.white;
-
-  void openNusuk(BuildContext context) async {
-    final Uri appUri = Uri.parse("nusuk://");
-    final Uri playStoreUri = Uri.parse("https://play.google.com/store/apps/details?id=com.moh.nusukapp");
-
-    if (await canLaunchUrl(appUri)) {
-      await launchUrl(appUri);
-    } else {
-      if (!context.mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Nusuk App Required"),
-          content: const Text("To apply for Umrah or Hajj, please install the official Nusuk app."),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-            TextButton(onPressed: () async => await launchUrl(playStoreUri), child: const Text("Install")),
-          ],
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +31,6 @@ class UserDashboard extends StatelessWidget {
               centerTitle: true,
               title: const Text("User Dashboard", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 22), 
-                  onPressed: () => Get.to(() => ChatbotScreen())
-                ),
                 IconButton(
                   icon: const Icon(Icons.logout_rounded, size: 22), 
                   onPressed: () async => await logoutUser()
@@ -148,7 +122,7 @@ class UserDashboard extends StatelessWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.0,
               ),
-              itemCount: userFeatures.length + 1,
+              itemCount: userFeatures.length + 2,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return _buildDashboardCard(
@@ -156,13 +130,22 @@ class UserDashboard extends StatelessWidget {
                     iconColor: Colors.blue.shade800,
                     title: "Nusuk App",
                     description: "Apply for Umrah",
-                    onTap: () => openNusuk(context),
+                    onTap: () => Get.to(() => const NusukInfoScreen()),
                   );
                 }
-                final feature = userFeatures[index - 1];
+                if (index == 1) {
+                  return _buildDashboardCard(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    iconColor: Colors.deepPurple.shade500,
+                    title: "Chatbot",
+                    description: "Ask questions anytime",
+                    onTap: () => Get.to(() => ChatbotScreen()),
+                  );
+                }
+                final feature = userFeatures[index - 2];
                 return _buildDashboardCard(
                   icon: feature['icon'],
-                  iconColor: iconColors[(index - 1) % iconColors.length],
+                  iconColor: iconColors[(index - 2) % iconColors.length],
                   title: feature['title'],
                   description: feature['description'],
                   onTap: () => Get.toNamed(feature['route']),

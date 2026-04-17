@@ -17,6 +17,9 @@ class _SaiCounterState extends State<SaiCounter> {
   StreamSubscription<Position>? _positionStreamSub;
 
   static const double saiDistance = 394; // Safa <-> Marwa distance
+  static const double minAccuracyMeters = 25.0;
+  static const double minMovementMeters = 2.5;
+  static const double maxWalkingSpeedMps = 3.5;
   String statusMessage = "Initializing location...";
   bool isTracking = false;
 
@@ -58,27 +61,50 @@ class _SaiCounterState extends State<SaiCounter> {
 
     _positionStreamSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.best,
-        distanceFilter: 0,
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 2,
       ),
     ).listen((Position position) {
-      if (lastPosition != null) {
-        final double distance = Geolocator.distanceBetween(
-          lastPosition!.latitude, lastPosition!.longitude,
-          position.latitude, position.longitude,
-        );
-
-        if (distance > 0.5) {
-          setState(() {
-            totalDistance += distance;
-            if (totalDistance >= saiDistance) {
-              saiCount++;
-              totalDistance = 0.0;
-              statusMessage = "Round $saiCount completed!";
-            }
-          });
-        }
+      // Ignore low-quality GPS fixes that can drift while standing still.
+      if (position.accuracy > minAccuracyMeters) {
+        return;
       }
+
+      if (lastPosition == null) {
+        lastPosition = position;
+        return;
+      }
+
+      final double distance = Geolocator.distanceBetween(
+        lastPosition!.latitude,
+        lastPosition!.longitude,
+        position.latitude,
+        position.longitude,
+      );
+
+      final DateTime? lastTime = lastPosition!.timestamp;
+      final DateTime? currentTime = position.timestamp;
+      final double seconds = (lastTime != null && currentTime != null)
+          ? currentTime.difference(lastTime).inMilliseconds / 1000.0
+          : 0.0;
+      final double computedSpeed = seconds > 0 ? distance / seconds : 0.0;
+
+      // Reject jitter and unrealistic GPS jumps.
+      if (distance < minMovementMeters || computedSpeed > maxWalkingSpeedMps) {
+        lastPosition = position;
+        return;
+      }
+
+      setState(() {
+        totalDistance += distance;
+        statusMessage = "Tracking... Keep walking";
+        if (totalDistance >= saiDistance) {
+          saiCount++;
+          totalDistance = 0.0;
+          statusMessage = "Round $saiCount completed!";
+        }
+      });
+
       lastPosition = position;
     });
   }

@@ -57,18 +57,6 @@ final List<Map<String, dynamic>> userFeatures = [
     'route': AppRoutes.viewplaces,
   },
   {
-    'title': 'Notifications',
-    'description': 'View important alerts',
-    'icon': Icons.notifications,
-    'route': AppRoutes.usernotification,
-  },
-  {
-    'title': 'Offline Guide Access',
-    'description': 'Access guide without internet',
-    'icon': Icons.wifi_off,
-    'route': AppRoutes.userofflineaccess,
-  },
-  {
     'title': 'View Travel Agent',
     'description': 'Contact your assigned agent/group',
     'icon': Icons.person_pin,

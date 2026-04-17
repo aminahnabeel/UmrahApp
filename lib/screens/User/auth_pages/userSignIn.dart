@@ -183,6 +183,28 @@ class UserSignInScreen extends StatelessWidget {
                         Expanded(child: Divider(color: Colors.white38, thickness: 1)),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.toNamed(AppRoutes.userofflineaccess),
+                        icon: const Icon(Icons.wifi_off_rounded, color: Colors.white),
+                        label: const Text(
+                          'Go Offline',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white70),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
