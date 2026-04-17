@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:smart_umrah_app/widgets/custom_app_bar.dart'; // Import CustomAppBar
+import 'package:smart_umrah_app/widgets/custom_app_bar.dart'; 
 
 class SaiCounter extends StatefulWidget {
   const SaiCounter({super.key});
@@ -16,10 +16,13 @@ class _SaiCounterState extends State<SaiCounter> {
   Position? lastPosition;
   StreamSubscription<Position>? _positionStreamSub;
 
-  static const double saiDistance = 394; // Safa <-> Marwa distance
-  static const double minAccuracyMeters = 25.0;
-  static const double minMovementMeters = 2.5;
-  static const double maxWalkingSpeedMps = 3.5;
+  // Constants to tune for stability
+  static const double saiDistance = 394.0; // Distance between Safa and Marwa
+  static const double minAccuracyMeters = 20.0; // Ignore low-quality signals
+  static const double movementThreshold = 3.0; // Ignore jitters less than 3m
+  static const double minWalkingSpeed = 0.5; // Ignore drift (standing still)
+  static const double maxWalkingSpeed = 3.5; // Ignore "teleporting" GPS jumps
+
   String statusMessage = "Initializing location...";
   bool isTracking = false;
 
@@ -36,11 +39,11 @@ class _SaiCounterState extends State<SaiCounter> {
   }
 
   Future<void> _startLocationTracking() async {
-    setState(() => statusMessage = "Checking location...");
+    setState(() => statusMessage = "Checking GPS...");
 
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() => statusMessage = "GPS is disabled.");
+      setState(() => statusMessage = "Please enable GPS.");
       return;
     }
 
@@ -50,31 +53,30 @@ class _SaiCounterState extends State<SaiCounter> {
     }
 
     if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
-      setState(() => statusMessage = "Permission denied.");
+      setState(() => statusMessage = "Location permission denied.");
       return;
     }
 
     setState(() {
-      statusMessage = "Tracking... Start walking";
+      statusMessage = "Ready! Start walking.";
       isTracking = true;
     });
 
     _positionStreamSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 2,
+        distanceFilter: 5, // Only notify if moved 5 meters
       ),
     ).listen((Position position) {
-      // Ignore low-quality GPS fixes that can drift while standing still.
-      if (position.accuracy > minAccuracyMeters) {
-        return;
-      }
+      // 1. Filter by Accuracy
+      if (position.accuracy > minAccuracyMeters) return;
 
       if (lastPosition == null) {
         lastPosition = position;
         return;
       }
 
+      // 2. Calculate Distance from last point
       final double distance = Geolocator.distanceBetween(
         lastPosition!.latitude,
         lastPosition!.longitude,
@@ -82,30 +84,36 @@ class _SaiCounterState extends State<SaiCounter> {
         position.longitude,
       );
 
-      final DateTime? lastTime = lastPosition!.timestamp;
-      final DateTime? currentTime = position.timestamp;
-      final double seconds = (lastTime != null && currentTime != null)
-          ? currentTime.difference(lastTime).inMilliseconds / 1000.0
-          : 0.0;
-      final double computedSpeed = seconds > 0 ? distance / seconds : 0.0;
+      // 3. Filter by Speed and Minimum Movement
+      // position.speed is automatically provided by Geolocator in m/s
+      bool isActuallyMoving = position.speed > minWalkingSpeed && distance > movementThreshold;
+      bool isRealistic = position.speed < maxWalkingSpeed;
 
-      // Reject jitter and unrealistic GPS jumps.
-      if (distance < minMovementMeters || computedSpeed > maxWalkingSpeedMps) {
+      if (isActuallyMoving && isRealistic) {
+        setState(() {
+          totalDistance += distance;
+          statusMessage = "Tracking... Round ${saiCount + 1}";
+
+          // Logic for completing a round
+          if (totalDistance >= saiDistance) {
+            saiCount++;
+            totalDistance = 0.0;
+            statusMessage = "Round $saiCount completed!";
+            
+            if (saiCount >= 7) {
+              statusMessage = "Sa'i Completed!";
+              isTracking = false;
+              _positionStreamSub?.pause();
+            }
+          }
+        });
         lastPosition = position;
-        return;
-      }
-
-      setState(() {
-        totalDistance += distance;
-        statusMessage = "Tracking... Keep walking";
-        if (totalDistance >= saiDistance) {
-          saiCount++;
-          totalDistance = 0.0;
-          statusMessage = "Round $saiCount completed!";
+      } else {
+        // If not moving significantly, we still update status but don't add distance
+        if (mounted && totalDistance < saiDistance) {
+          setState(() => statusMessage = "Stationary or weak signal...");
         }
-      });
-
-      lastPosition = position;
+      }
     });
   }
 
@@ -114,13 +122,13 @@ class _SaiCounterState extends State<SaiCounter> {
       saiCount = 0;
       totalDistance = 0.0;
       statusMessage = "Counter reset.";
+      lastPosition = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 1. Same CustomAppBar
       appBar: const CustomAppBar(
         title: "Sa’i Auto Counter",
         showBackButton: true,
@@ -141,12 +149,8 @@ class _SaiCounterState extends State<SaiCounter> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-                
-                // Icon for Sa'i
                 const Icon(Icons.directions_run, size: 80, color: Colors.white),
-                
                 const SizedBox(height: 20),
-
                 Text(
                   "$saiCount / 7 Rounds",
                   style: const TextStyle(
@@ -155,10 +159,7 @@ class _SaiCounterState extends State<SaiCounter> {
                     color: Colors.white,
                   ),
                 ),
-                
                 const SizedBox(height: 30),
-
-                // Distance Card (Matching Tawaf Style)
                 Card(
                   color: Colors.white.withOpacity(0.15),
                   elevation: 0,
@@ -187,22 +188,16 @@ class _SaiCounterState extends State<SaiCounter> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                // Status Message
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: Text(
                     statusMessage,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 15),
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                // Reset Button (Same as Tawaf)
                 ElevatedButton.icon(
                   onPressed: _resetCounter,
                   icon: const Icon(Icons.refresh),
